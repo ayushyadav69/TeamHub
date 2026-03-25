@@ -21,7 +21,7 @@ final class EmployeeDBManager {
 
 extension EmployeeDBManager {
     
-    func insert(_ employee: EmployeeDetail) throws {
+    func insert(_ employee: EmployeeDetail, syncStatus: SyncStatus) throws {
         
         let entity = EmployeeEntity(
             id: employee.id,
@@ -34,14 +34,14 @@ extension EmployeeDBManager {
             city: employee.city,
             country: employee.country,
             joiningDate: employee.joiningDate,
-            mobiles: employee.mobiles.map {
+            mobiles: (employee.mobiles).map {
                 MobileEntity(
                     id: $0.id,
                     type: $0.type.rawValue,
                     number: $0.number
                 )
             },
-            syncStatus: SyncStatus.created.rawValue,
+            syncStatus: syncStatus.rawValue,
             isDeleted: false
         )
         
@@ -81,7 +81,7 @@ extension EmployeeDBManager {
         // Sync logic
         if entity.syncStatus != SyncStatus.created.rawValue {
             entity.syncStatus = SyncStatus.updated.rawValue
-        }
+        } 
         
         try context.save()
     }
@@ -116,7 +116,7 @@ extension EmployeeDBManager {
         
         let predicate = #Predicate<EmployeeEntity> { entity in
             
-            !entity.isDeleted
+            !entity.isDeleted && entity.syncStatus == "synced"
             
             &&
             (search == nil || entity.name.localizedStandardContains(search!))
@@ -136,11 +136,11 @@ extension EmployeeDBManager {
         }
         
         var descriptor = FetchDescriptor<EmployeeEntity>(
-            predicate: predicate,
-            sortBy: [
-                SortDescriptor(\.name),
-                SortDescriptor(\.id)
-            ]
+            predicate: predicate
+//            sortBy: [
+//                SortDescriptor(\.name),
+//                SortDescriptor(\.id)
+//            ]
         )
         
         descriptor.fetchLimit = page.pageSize
@@ -225,6 +225,78 @@ extension EmployeeDBManager {
         
         entity.id = newID
         
+        try context.save()
+    }
+    
+    func fetchPending(
+        query: SearchFilterQuery?
+    ) throws -> [EmployeeEntity] {
+        
+        let search = query?.searchText?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let deptArray = query?.departments ?? []
+        let designationArray = query?.designations ?? []
+        let isActive = query?.isActive
+        
+        let predicate = #Predicate<EmployeeEntity> { entity in
+            
+            // ONLY pending
+            entity.syncStatus != "synced"
+            &&
+            !entity.isDeleted
+            
+            // SEARCH
+            &&
+            (search == nil || entity.name.localizedStandardContains(search!))
+            
+            // DEPARTMENT
+            &&
+            (deptArray.isEmpty || deptArray.contains(entity.department))
+            
+            // DESIGNATION
+            &&
+            (designationArray.isEmpty || designationArray.contains(entity.designation))
+            
+            // STATUS
+            &&
+            (
+                isActive == nil
+                ||
+                entity.isActive == isActive!
+            )
+        }
+        
+        let descriptor = FetchDescriptor<EmployeeEntity>(
+            predicate: predicate
+//            sortBy: [
+//                SortDescriptor(\.name),
+//                SortDescriptor(\.id)
+//            ]
+        )
+        
+        return try context.fetch(descriptor)
+    }
+    
+    func insertDeletedPlaceholder(id: String) throws {
+        
+        let entity = EmployeeEntity(
+            id: id,
+            name: "",
+            designation: "",
+            department: "",
+            isActive: false,
+            imageURL: "",
+            email: "",
+            city: "",
+            country: "",
+            joiningDate: Date(),
+            mobiles: [],
+            syncStatus: SyncStatus.deleted.rawValue,
+            isDeleted: true
+        )
+        
+        context.insert(entity)
         try context.save()
     }
 }

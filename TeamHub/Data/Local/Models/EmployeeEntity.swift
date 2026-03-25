@@ -29,7 +29,7 @@ final class EmployeeEntity {
     var syncStatus: String
     var isDeleted: Bool
     
-    @Relationship(deleteRule: .cascade)
+    @Relationship(deleteRule: .cascade, inverse: \MobileEntity.employee)
     var mobiles: [MobileEntity]
     
     init(

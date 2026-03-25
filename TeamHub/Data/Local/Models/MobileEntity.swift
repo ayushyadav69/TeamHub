@@ -15,6 +15,8 @@ final class MobileEntity {
     var type: String
     var number: String
     
+    var employee: EmployeeEntity?   // inverse
+    
     init(id: String?, type: String, number: String) {
         self.id = id
         self.type = type

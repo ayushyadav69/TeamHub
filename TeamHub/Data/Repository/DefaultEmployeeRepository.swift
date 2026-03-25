@@ -31,58 +31,110 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         page: EmployeePage
     ) async throws -> [Employee] {
         
-        // CASE 1: Search / Filter
-        if let query, networkMonitor.isConnected {
+        // QUERY FLOW
+        
+        if let query {
             
-            let response = try await remote.fetchEmployees(
+            // ONLINE → API ONLY (no caching)
+            if networkMonitor.isConnected {
+                
+                let response = try await remote.fetchEmployees(
+                    query: query,
+                    page: page
+                )
+                
+                return response.data.map { $0.toEmployee() }
+            }
+            
+            // OFFLINE → DB
+            
+            let synced = try await local.fetchSynced(
                 query: query,
                 page: page
             )
             
-            return response.data.map { $0.toEmployee() }
+            // prepend pending only on first page
+            if page.page == 0 {
+                let pending = try await local.fetchPending(query: query)
+                return pending + synced
+            }
+            
+            return synced
         }
         
-        // CASE 2: Normal list (DB-first)
+        // NORMAL FLOW
         
-        let localData = try await local.fetch(query: nil, page: page)
+        var synced = try await local.fetchSynced(
+            query: nil,
+            page: page
+        )
         
-        // If DB has data → return it
-        if !localData.isEmpty {
-            return localData
-        }
-        
-        // If DB empty AND online → fetch from API
-        if networkMonitor.isConnected {
+        // CACHE MISS → FETCH FROM API
+        if synced.isEmpty,
+           networkMonitor.isConnected {
             
             let response = try await remote.fetchEmployees(
                 query: nil,
                 page: page
             )
             
-            let employees = response.data.map { $0.toEmployeeDetail(dateParser: dateParser) }
-            
-            // Save to DB
-            for employee in employees {
-                try await local.insert(employee)
+            let employees = response.data.map {
+                $0.toEmployeeDetail(dateParser: dateParser)
             }
             
-            // Return from DB (single source of truth)
-            return try await local.fetch(query: nil, page: page)
+            // Save into DB
+            for employee in employees {
+                try await local.insert(employee, syncStatus: .synced)
+            }
+            
+            // Fetch again from DB
+            synced = try await local.fetchSynced(
+                query: nil,
+                page: page
+            )
         }
         
-        return []
+        // Prepend pending only on first page
+        if page.page == 1 {
+            let pending = try await local.fetchPending(query: nil)
+            return pending + synced
+        }
+        
+        return synced
     }
     
     func addEmployee(_ employee: EmployeeDetail) async throws {
-        try await local.insert(employee)
+        try await local.insert(employee, syncStatus: .created)
     }
     
     func updateEmployee(_ employee: EmployeeDetail) async throws {
-        try await local.update(employee)
+        
+        // Try finding in DB
+        if try await local.exists(id: employee.id) {
+            
+            // Update existing
+            try await local.update(employee)
+            
+        } else {
+            
+            // Insert first, then mark as updated
+            try await local.insert(employee, syncStatus: .updated)
+//            try await local.markAsUpdated(id: employee.id)
+        }
     }
     
     func deleteEmployee(id: String) async throws {
-        try await local.delete(id: id)
+        
+        if try await local.exists(id: id) {
+            
+            try await local.delete(id: id)
+            
+        } else {
+            
+            // Insert minimal entity, then mark deleted
+            try await local.insertDeletedPlaceholder(id: id)
+//            try await local.delete(id: id)
+        }
     }
     
     func fetchDetail(id: String) async throws -> EmployeeDetail {

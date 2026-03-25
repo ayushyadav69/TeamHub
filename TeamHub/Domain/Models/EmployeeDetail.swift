@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EmployeeDetail {
+struct EmployeeDetail: Hashable {
     
     let id: String
     let name: String
@@ -22,7 +22,7 @@ struct EmployeeDetail {
     let mobiles: [Mobile]
 }
 
-struct Mobile {
+struct Mobile: Hashable {
     let id: String?
     let type: MobileType
     let number: String

@@ -15,7 +15,7 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
         self.dbManager = dbManager
     }
     
-    func fetch(
+    func fetchSynced(
         query: SearchFilterQuery?,
         page: EmployeePage
     ) async throws -> [Employee] {
@@ -25,8 +25,8 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
         return entities.map { $0.toDomain() }
     }
     
-    func insert(_ employee: EmployeeDetail) async throws {
-        try dbManager.insert(employee)
+    func insert(_ employee: EmployeeDetail, syncStatus: SyncStatus) async throws {
+        try dbManager.insert(employee, syncStatus: syncStatus)
     }
     
     func update(_ employee: EmployeeDetail) async throws {
@@ -48,5 +48,36 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
     
     func fetchFilters() async throws -> Filters {
         try dbManager.fetchFilters()
+    }
+    
+    func fetchPending(
+        query: SearchFilterQuery?
+    ) async throws -> [Employee] {
+        
+        let entities = try dbManager.fetchPending(query: query)
+        
+        return entities.map { $0.toDomain() }
+    }
+    
+    func exists(id: String) async throws -> Bool {
+        try dbManager.fetchDetail(id: id) != nil
+    }
+    
+    func markAsUpdated(id: String) async throws {
+        
+        guard let entity = try dbManager.fetchDetail(id: id) else {
+            return
+        }
+        
+        // Do NOT override created
+        if entity.syncStatus != SyncStatus.created.rawValue {
+            entity.syncStatus = SyncStatus.updated.rawValue
+        }
+        
+        try dbManager.save()
+    }
+    
+    func insertDeletedPlaceholder(id: String) async throws {
+        try dbManager.insertDeletedPlaceholder(id: id)
     }
 }
