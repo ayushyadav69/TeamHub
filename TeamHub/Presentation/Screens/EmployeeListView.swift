@@ -86,6 +86,9 @@ struct EmployeeListView: View {
                 }
                 .listStyle(.plain)
                 .animation(.easeInOut, value: viewModel.isLoadingMore)
+                .refreshable {
+                    await viewModel.refresh()
+                }
             }
         }
         .task {
@@ -99,5 +102,6 @@ struct EmployeeListView: View {
                 Image(systemName: "plus")
             }
         }
+        
     }
 }

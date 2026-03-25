@@ -31,6 +31,7 @@ final class EmployeeListViewModel {
     private var currentPage = 1
     private let pageSize = 10
     private var hasMore = true
+    private var hasLoaded = false
     
     // MARK: - Query
     
@@ -49,6 +50,10 @@ final class EmployeeListViewModel {
     func loadInitial() async {
         
         guard !isLoading else { return }
+        // Prevent reload
+        guard !hasLoaded else { return }
+        
+        hasLoaded = true
         
         isLoading = true
         errorMessage = nil
@@ -114,12 +119,14 @@ final class EmployeeListViewModel {
     }
     
     func refresh() async {
+        hasLoaded = false
         await loadInitial()
     }
     
     func applyQuery(_ query: SearchFilterQuery?) async {
         
         currentQuery = query
+        hasLoaded = false
         await loadInitial()
     }
     
