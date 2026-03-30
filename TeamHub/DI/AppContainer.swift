@@ -28,6 +28,10 @@ final class AppContainer {
         DefaultAPIDateFormatter()
     }()
     
+    lazy var imageUploader: ImageUploader = {
+        CloudinaryImageUploader(cloudName: "dovot7suo", uploadPreset: "siynhyo9")
+    }()
+    
     // MARK: - DB
     
     lazy var employeeDBManager: EmployeeDBManager = {
@@ -58,7 +62,8 @@ final class AppContainer {
             remote: employeeRemoteDataSource,
             local: employeeLocalDataSource,
             networkMonitor: networkMonitor,
-            dateParser: dateParser
+            dateParser: dateParser,
+            imageUploader: imageUploader
         )
     }()
     

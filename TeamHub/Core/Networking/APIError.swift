@@ -12,6 +12,7 @@ enum APIError: Error {
     case invalidResponse
     case invalidStatusCode(Int, message: String?)
     case decodingError
+    case custom(String)
 }
 
 extension APIError {

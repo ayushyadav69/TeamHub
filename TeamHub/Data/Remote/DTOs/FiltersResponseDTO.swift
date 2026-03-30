@@ -20,8 +20,14 @@ struct FiltersDTO: Decodable {
     let departments: [String]
     let statuses: [StatusDTO]
     let mobileTypes: [MobileTypeDTO]
+    
+    enum CodingKeys: String, CodingKey {
+        case designations
+        case departments
+        case statuses
+        case mobileTypes = "mobile_types"   //  FIX
+    }
 }
-
 struct StatusDTO: Decodable {
     let label: String
     let value: String

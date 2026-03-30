@@ -17,7 +17,7 @@ protocol EmployeeRepository {
     func fetchDetail(id: String) async throws -> EmployeeDetail
     func fetchFilters() async throws -> Filters
     
-    func addEmployee(_ employee: EmployeeDetail) async throws
-    func updateEmployee(_ employee: EmployeeDetail) async throws
+    func addEmployee(_ employee: EmployeeFormData) async throws
+    func updateEmployee(_ employee: EmployeeFormData) async throws
     func deleteEmployee(id: String) async throws
 }

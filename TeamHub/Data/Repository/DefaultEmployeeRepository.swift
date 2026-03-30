@@ -13,17 +13,20 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     private let local: EmployeeLocalDataSource
     private let networkMonitor: NetworkMonitor
     private let dateParser: DateParsing
+    private let imageUploader: ImageUploader
     
     init(
         remote: EmployeeRemoteDataSource,
         local: EmployeeLocalDataSource,
         networkMonitor: NetworkMonitor,
-        dateParser: DateParsing
+        dateParser: DateParsing,
+        imageUploader: ImageUploader
     ) {
         self.remote = remote
         self.local = local
         self.networkMonitor = networkMonitor
         self.dateParser = dateParser
+        self.imageUploader = imageUploader
     }
     
     func fetchAll(
@@ -103,11 +106,32 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         return synced
     }
     
-    func addEmployee(_ employee: EmployeeDetail) async throws {
+    func addEmployee(_ form: EmployeeFormData) async throws {
+        
+        var employee = form.employee
+        
+        // STEP 1: Upload image if exists
+        if let data = form.imageData {
+            let url = try await imageUploader.upload(data)
+            employee.imageURL = url
+        }
+        
+        // STEP 2: Save to DB FIRST (offline-first)
         try await local.insert(employee, syncStatus: .created)
+        
+        // STEP 3: Mark for sync (SyncManager handles API)
     }
     
-    func updateEmployee(_ employee: EmployeeDetail) async throws {
+    func updateEmployee(_ form: EmployeeFormData) async throws {
+        
+        var employee = form.employee
+        
+        // STEP 1: Upload image if exists
+        if let data = form.imageData {
+            let url = try await imageUploader.upload(data)
+            print("Uploaded URL:", url)
+            employee.imageURL = url
+        }
         
         // Try finding in DB
         if try await local.exists(id: employee.id) {

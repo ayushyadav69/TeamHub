@@ -18,6 +18,7 @@ final class URLSessionAPIClient: APIClient {
     func send<T: APIRequest>(_ request: T) async throws -> T.Response {
         
         let urlRequest = try request.buildURLRequest()
+        print("🌐 Request URL:", urlRequest)
         
         let (data, response) = try await session.data(for: urlRequest)
         

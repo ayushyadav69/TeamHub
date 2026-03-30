@@ -17,15 +17,15 @@ struct EmployeeDetail: Hashable {
     let city: String
     let country: String
     let isActive: Bool
-    let imageURL: String?
+    var imageURL: String?
     let joiningDate: Date
     let mobiles: [Mobile]
 }
 
-struct Mobile: Hashable {
+struct Mobile: Hashable, Identifiable {
     let id: String?
-    let type: MobileType
-    let number: String
+    var type: MobileType
+    var number: String
 }
 
 enum MobileType: String {

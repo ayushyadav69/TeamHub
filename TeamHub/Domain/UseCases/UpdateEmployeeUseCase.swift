@@ -8,7 +8,7 @@
 import Foundation
 
 protocol UpdateEmployeeUseCase {
-    func execute(_ employee: EmployeeDetail) async throws
+    func execute(_ employeeForm: EmployeeFormData) async throws
 }
 
 final class DefaultUpdateEmployeeUseCase: UpdateEmployeeUseCase {
@@ -27,9 +27,9 @@ final class DefaultUpdateEmployeeUseCase: UpdateEmployeeUseCase {
         self.networkMonitor = networkMonitor
     }
     
-    func execute(_ employee: EmployeeDetail) async throws {
+    func execute(_ employeeForm: EmployeeFormData) async throws {
         
-        try await repository.updateEmployee(employee)
+        try await repository.updateEmployee(employeeForm)
         
         if networkMonitor.isConnected {
             Task {

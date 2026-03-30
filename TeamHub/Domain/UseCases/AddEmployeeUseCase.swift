@@ -8,7 +8,7 @@
 import Foundation
 
 protocol AddEmployeeUseCase {
-    func execute(_ employee: EmployeeDetail) async throws
+    func execute(_ employeeForm: EmployeeFormData) async throws
 }
 
 final class DefaultAddEmployeeUseCase: AddEmployeeUseCase {
@@ -27,9 +27,9 @@ final class DefaultAddEmployeeUseCase: AddEmployeeUseCase {
         self.networkMonitor = networkMonitor
     }
     
-    func execute(_ employee: EmployeeDetail) async throws {
+    func execute(_ employeeForm: EmployeeFormData) async throws {
         
-        try await repository.addEmployee(employee)
+        try await repository.addEmployee(employeeForm)
         
         if networkMonitor.isConnected {
             Task {

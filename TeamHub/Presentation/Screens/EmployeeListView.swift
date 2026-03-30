@@ -12,6 +12,9 @@ struct EmployeeListView: View {
     @State private var viewModel: EmployeeListViewModel
     let onNavigate: (Route) -> Void
     
+    @State private var searchText: String = ""
+    @State private var searchTask: Task<Void, Never>?
+    
     init(
         container: AppContainer,
         onNavigate: @escaping (Route) -> Void
@@ -86,6 +89,20 @@ struct EmployeeListView: View {
                 }
                 .listStyle(.plain)
                 .animation(.easeInOut, value: viewModel.isLoadingMore)
+                .searchable(text: $searchText)
+                .onChange(of: searchText) { _, newValue in
+                    
+                    searchTask?.cancel()
+                    
+                    searchTask = Task {
+                        
+                        try? await Task.sleep(nanoseconds: 900_000_000) // 900ms
+                        
+                        if Task.isCancelled { return }
+                        
+                        await applySearch(newValue)
+                    }
+                }
                 .refreshable {
                     await viewModel.refresh()
                 }
@@ -103,5 +120,18 @@ struct EmployeeListView: View {
             }
         }
         
+    }
+}
+
+private extension EmployeeListView {
+    private func applySearch(_ text: String) async {
+        
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let query = trimmed.isEmpty
+            ? nil
+        : SearchFilterQuery(searchText: trimmed, isActive: nil)
+        
+        await viewModel.applyQuery(query)
     }
 }
