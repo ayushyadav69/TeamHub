@@ -162,7 +162,7 @@ final class EmployeeFormViewModel {
                 city: city,
                 country: country,
                 isActive: isActive,
-                imageURL: "",
+                imageURL: selectedImageURL,
                 joiningDate: existingEmployee?.joiningDate ?? Date(),
                 mobiles: mobiles
             )
