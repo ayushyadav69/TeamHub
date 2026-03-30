@@ -56,6 +56,7 @@ final class EmployeeListViewModel {
         hasLoaded = true
         
         isLoading = true
+        defer { isLoading = false }
         errorMessage = nil
         
         currentPage = 1
@@ -78,10 +79,17 @@ final class EmployeeListViewModel {
             hasMore = !result.isEmpty
             
         } catch {
+            
+            //  Ignore cancelled requests
+            if let urlError = error as? URLError,
+               urlError.code == .cancelled {
+                return
+            }
+            
             errorMessage = (error as? APIError)?.message ?? "Something went wrong"
         }
         
-        isLoading = false
+//        isLoading = false
     }
     
     func loadNextPage() async {
