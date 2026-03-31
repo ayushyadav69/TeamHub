@@ -24,3 +24,17 @@ final class DefaultAPIDateFormatter: DateFormatting {
         formatter.string(from: date)
     }
 }
+
+final class DefaultAPIDateFormatterISO: DateFormatting {
+    
+    private let formatter: ISO8601DateFormatter
+    
+    init() {
+        formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+    }
+    
+    func string(from date: Date) -> String {
+        formatter.string(from: date)
+    }
+}

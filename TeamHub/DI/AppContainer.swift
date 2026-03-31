@@ -24,8 +24,16 @@ final class AppContainer {
         DefaultDateParser()
     }()
     
+    lazy var dateParserISO: DateParsing = {
+        DefaultAPIDateParserISO()
+    }()
+    
     lazy var apiDateFormatter: DateFormatting = {
         DefaultAPIDateFormatter()
+    }()
+    
+    lazy var apiDateFormatterISO: DateFormatting = {
+        DefaultAPIDateFormatterISO()
     }()
     
     lazy var imageUploader: ImageUploader = {
@@ -51,7 +59,8 @@ final class AppContainer {
     lazy var employeeRemoteDataSource: EmployeeRemoteDataSource = {
         DefaultEmployeeRemoteDataSource(
             apiClient: apiClient,
-            dateFormatter: apiDateFormatter
+            dateFormatter: apiDateFormatter,
+            dateFormatterISO: apiDateFormatterISO
         )
     }()
     
@@ -63,6 +72,7 @@ final class AppContainer {
             local: employeeLocalDataSource,
             networkMonitor: networkMonitor,
             dateParser: dateParser,
+            dateParserISO: dateParserISO,
             imageUploader: imageUploader
         )
     }()

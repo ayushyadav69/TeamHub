@@ -27,7 +27,10 @@ final class EmployeeEntity {
     
     // IMPORTANT (sync support)
     var syncStatus: String
-    var isDeleted: Bool
+//    var isDeleted: Bool
+    var createdAt: Date?
+    var updatedAt: Date?
+    var deletedAt: Date?
     
     @Relationship(deleteRule: .cascade, inverse: \MobileEntity.employee)
     var mobiles: [MobileEntity]
@@ -45,7 +48,9 @@ final class EmployeeEntity {
         joiningDate: Date,
         mobiles: [MobileEntity],
         syncStatus: String,
-        isDeleted: Bool
+        createdAt: Date?,
+        updatedAt: Date?,
+        deletedAt: Date?
     ) {
         self.id = id
         self.name = name
@@ -59,6 +64,8 @@ final class EmployeeEntity {
         self.joiningDate = joiningDate
         self.mobiles = mobiles
         self.syncStatus = syncStatus
-        self.isDeleted = isDeleted
+        self.createdAt = createdAt
+        self.updatedAt = updatedAt
+        self.deletedAt = deletedAt
     }
 }

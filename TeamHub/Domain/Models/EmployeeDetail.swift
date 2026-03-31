@@ -19,6 +19,9 @@ struct EmployeeDetail: Hashable {
     let isActive: Bool
     var imageURL: String?
     let joiningDate: Date
+    let createdAt: Date?
+    let updatedAt: Date?
+    let deletedAt: Date?
     let mobiles: [Mobile]
 }
 

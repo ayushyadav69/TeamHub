@@ -36,6 +36,9 @@ extension EmployeeEntity {
             isActive: isActive,
             imageURL: imageURL,
             joiningDate: joiningDate,
+            createdAt: createdAt,
+            updatedAt: updatedAt,
+            deletedAt: deletedAt,
             mobiles: mobiles.map {
                 Mobile(
                     id: $0.id,

@@ -37,7 +37,7 @@ struct EmployeeListView: View {
         
         Group {
             
-            if viewModel.isLoading {
+            if viewModel.isLoading || !viewModel.hasLoaded {
                 
                 VStack {
                     Spacer()
@@ -60,7 +60,7 @@ struct EmployeeListView: View {
                 }
                 .padding()
                 
-            } else {
+            } else if !viewModel.employees.isEmpty {
                 
                 List {
                     
@@ -94,23 +94,11 @@ struct EmployeeListView: View {
                 }
                 .listStyle(.plain)
                 .animation(.easeInOut, value: viewModel.isLoadingMore)
-                .searchable(text: $searchText)
-                .onChange(of: searchText) { _, newValue in
-                    
-                    searchTask?.cancel()
-                    
-                    searchTask = Task {
-                        
-                        try? await Task.sleep(nanoseconds: 900_000_000) // 900ms
-                        
-                        if Task.isCancelled { return }
-                        
-                        await viewModel.applyQuery(buildQuery())
-                    }
-                }
                 .refreshable {
                     await viewModel.refresh()
                 }
+            } else {
+                Text("No employees")
             }
         }
         .task {
@@ -118,6 +106,20 @@ struct EmployeeListView: View {
             await viewModel.loadFilters()
         }
         .navigationTitle("Employees")
+        .searchable(text: $searchText)
+        .onChange(of: searchText) { _, newValue in
+            
+            searchTask?.cancel()
+            
+            searchTask = Task {
+                
+                try? await Task.sleep(nanoseconds: 900_000_000) // 900ms
+                
+                if Task.isCancelled { return }
+                
+                await viewModel.applyQuery(buildQuery())
+            }
+        }
         .toolbar {
             Button {
                 onNavigate(.add)
@@ -128,7 +130,21 @@ struct EmployeeListView: View {
             Button {
                 showFilterSheet = true
             } label: {
-                Image(systemName: "line.3.horizontal.decrease.circle")
+                
+                ZStack(alignment: .topTrailing) {
+                    
+                    Image(systemName: activeFilterCount > 0 ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
+                    
+                    if activeFilterCount > 0 {
+                        Text("\(activeFilterCount)")
+                            .font(.caption2)
+                            .padding(4)
+                            .background(Color.red)
+                            .foregroundColor(.white)
+                            .clipShape(Circle())
+                            .offset(x: 8, y: -8)
+                    }
+                }
             }
         }
         .sheet(isPresented: $showFilterSheet) {
@@ -164,6 +180,17 @@ private extension EmployeeListView {
 //        
 //        await viewModel.applyQuery(query)
 //    }
+    
+    private var activeFilterCount: Int {
+        
+        var count = 0
+        
+        if selectedStatus != nil { count += 1 }
+        if !selectedDesignations.isEmpty { count += 1 }
+        if !selectedDepartments.isEmpty { count += 1 }
+        
+        return count
+    }
     
     private func buildQuery() -> SearchFilterQuery? {
         

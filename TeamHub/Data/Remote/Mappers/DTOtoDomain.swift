@@ -34,7 +34,7 @@ extension EmployeeDTO {
 
 extension EmployeeDTO {
     
-    func toEmployeeDetail(dateParser: DateParsing) -> EmployeeDetail {
+    func toEmployeeDetail(dateParser: DateParsing, dateParserISO: DateParsing) -> EmployeeDetail {
         
         EmployeeDetail(
             id: id,
@@ -46,7 +46,10 @@ extension EmployeeDTO {
             country: country,
             isActive: isActive,
             imageURL: imgURL,
-            joiningDate: dateParser.parse(joiningDate),
+            joiningDate: dateParser.parse(joiningDate) ?? Date.now,
+            createdAt: dateParserISO.parse(createdAt ?? ""),
+            updatedAt: dateParserISO.parse(updatedAt ?? ""),
+            deletedAt: dateParserISO.parse(deletedAt ?? ""),
             mobiles: mobiles?.map { $0.toDomain() } ?? []
         )
     }
@@ -54,9 +57,10 @@ extension EmployeeDTO {
 
 extension EmployeeDetail {
     
-    func toRequestDTO(dateFormatter: DateFormatting) -> EmployeeRequestDTO {
+    func toRequestDTO(dateFormatter: DateFormatting, dateFormatterISO: DateFormatting) -> EmployeeRequestDTO {
         
         EmployeeRequestDTO(
+            id: id,
             name: name,
             email: email,
             designation: designation,
@@ -66,6 +70,9 @@ extension EmployeeDetail {
             is_active: isActive,
             img_url: imageURL,
             joining_date: dateFormatter.string(from: joiningDate),
+            created_at: createdAt != nil ? dateFormatterISO.string(from: createdAt!) : "",
+            updated_at: updatedAt != nil ? dateFormatterISO.string(from: updatedAt!) : "",
+            deleted_at: deletedAt != nil ? dateFormatterISO.string(from: deletedAt!) : "",
             mobiles: mobiles.map {
                 MobileRequestDTO(
                     number: $0.number,

@@ -72,6 +72,12 @@ struct FilterView: View {
                         dismiss()
                     }
                 }
+                
+                ToolbarItem(placement: .bottomBar) {
+                    Button("Reset") {
+                        resetFilters()
+                    }
+                }
             }
         }
     }
@@ -155,5 +161,11 @@ private extension FilterView {
                 Image(systemName: "checkmark")
             }
         }
+    }
+    
+    private func resetFilters() {
+        selectedStatus = nil
+        selectedDesignations.removeAll()
+        selectedDepartments.removeAll()
     }
 }

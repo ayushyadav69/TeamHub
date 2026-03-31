@@ -163,7 +163,10 @@ final class EmployeeFormViewModel {
                 country: country,
                 isActive: isActive,
                 imageURL: selectedImageURL,
-                joiningDate: existingEmployee?.joiningDate ?? Date(),
+                joiningDate: existingEmployee?.joiningDate ?? Date.now,
+                createdAt: existingEmployee?.createdAt ?? Date.now,
+                updatedAt: Date.now,
+                deletedAt: existingEmployee?.deletedAt,
                 mobiles: mobiles
             )
             

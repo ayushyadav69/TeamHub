@@ -37,8 +37,23 @@ final class SyncManager {
         do {
             let pending = try dbManager.fetchPending()
             
-            for entity in pending {
-                try await syncEntity(entity)
+            let batchSize = 4
+
+            for chunk in pending.chunked(into: batchSize) {
+                
+                await withTaskGroup(of: Void.self) { group in
+                    
+                    for entity in chunk {
+                        group.addTask {
+                            do {
+                                try await self.syncEntity(entity)
+                                print("Employee pushed to server🚀")
+                            } catch {
+                                print("Sync error for \(entity.id): \(entity.name) = ", error)
+                            }
+                        }
+                    }
+                }
             }
             
         } catch {
@@ -52,12 +67,12 @@ final class SyncManager {
             switch entity.syncStatus {
                 
             case SyncStatus.created.rawValue:
-                
+                print("above created employee")
                 let newID = try await remote.createEmployee(
                     dbManager.toEmployeeDetail(entity)
                 )
-                
-                try dbManager.replaceID(oldID: entity.id, newID: newID)
+                print("below created employee")
+//                try dbManager.replaceID(oldID: entity.id, newID: newID)
                 
             case SyncStatus.updated.rawValue:
                 try await remote.updateEmployee(
@@ -117,6 +132,16 @@ final class SyncManager {
             }
             
             try dbManager.save()
+        }
+    }
+}
+
+extension Array {
+    
+    func chunked(into size: Int) -> [[Element]] {
+        
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
         }
     }
 }

@@ -10,15 +10,18 @@ import Foundation
 final class DefaultEmployeeRemoteDataSource: EmployeeRemoteDataSource {
     
     private let apiClient: APIClient
-        private let dateFormatter: DateFormatting
-        
-        init(
-            apiClient: APIClient,
-            dateFormatter: DateFormatting
-        ) {
-            self.apiClient = apiClient
-            self.dateFormatter = dateFormatter
-        }
+    private let dateFormatter: DateFormatting
+    private let dateFormatterISO: DateFormatting
+    
+    init(
+        apiClient: APIClient,
+        dateFormatter: DateFormatting,
+        dateFormatterISO: DateFormatting
+    ) {
+        self.apiClient = apiClient
+        self.dateFormatter = dateFormatter
+        self.dateFormatterISO = dateFormatterISO
+    }
     
     func fetchEmployees(
         query: SearchFilterQuery?,
@@ -42,18 +45,18 @@ final class DefaultEmployeeRemoteDataSource: EmployeeRemoteDataSource {
     
     func createEmployee(_ employee: EmployeeDetail) async throws -> String {
         
-        let dto = employee.toRequestDTO(dateFormatter: dateFormatter)
+        let dto = employee.toRequestDTO(dateFormatter: dateFormatter, dateFormatterISO: dateFormatterISO)
         
         let request = CreateEmployeeRequest(dto: dto)
         
         let response = try await apiClient.send(request)
-        
+        print(response.data)
         return response.data.id
     }
 
     func updateEmployee(_ employee: EmployeeDetail) async throws {
         
-        let dto = employee.toRequestDTO(dateFormatter: dateFormatter)
+        let dto = employee.toRequestDTO(dateFormatter: dateFormatter, dateFormatterISO: dateFormatterISO)
         
         let request = UpdateEmployeeRequest(id: employee.id, dto: dto)
         

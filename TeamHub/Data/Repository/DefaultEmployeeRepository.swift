@@ -13,6 +13,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     private let local: EmployeeLocalDataSource
     private let networkMonitor: NetworkMonitor
     private let dateParser: DateParsing
+    private let dateParserISO: DateParsing
     private let imageUploader: ImageUploader
     
     init(
@@ -20,12 +21,14 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         local: EmployeeLocalDataSource,
         networkMonitor: NetworkMonitor,
         dateParser: DateParsing,
+        dateParserISO: DateParsing,
         imageUploader: ImageUploader
     ) {
         self.remote = remote
         self.local = local
         self.networkMonitor = networkMonitor
         self.dateParser = dateParser
+        self.dateParserISO = dateParserISO
         self.imageUploader = imageUploader
     }
     
@@ -82,7 +85,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             )
             
             let employees = response.data.map {
-                $0.toEmployeeDetail(dateParser: dateParser)
+                $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
             }
             
             // Save into DB
@@ -167,7 +170,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             
             let response = try await remote.fetchEmployeeDetail(id: id)
             
-            return response.data.toEmployeeDetail(dateParser: dateParser)
+            return response.data.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
         }
         
         return try await local.fetchDetail(id: id)

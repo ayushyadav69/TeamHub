@@ -18,10 +18,10 @@ final class URLSessionAPIClient: APIClient {
     func send<T: APIRequest>(_ request: T) async throws -> T.Response {
         
         let urlRequest = try request.buildURLRequest()
-//        print(" Request URL:", urlRequest)
-        
+        print(" Request URL:", urlRequest)
+        print(urlRequest.httpMethod)
         let (data, response) = try await session.data(for: urlRequest)
-        
+        print("Data: \(data),",String(data: data, encoding: .utf8))
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
@@ -32,8 +32,9 @@ final class URLSessionAPIClient: APIClient {
             
             throw APIError.invalidStatusCode(httpResponse.statusCode, message: message)
         }
-        
+        print("Response: \(httpResponse.statusCode)")
         do {
+            print(" Raw response:", String(data: data, encoding: .utf8) ?? "")
             return try JSONDecoder().decode(T.Response.self, from: data)
         } catch {
             throw APIError.decodingError

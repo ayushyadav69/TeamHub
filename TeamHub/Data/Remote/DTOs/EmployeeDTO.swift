@@ -20,12 +20,18 @@ struct EmployeeDTO: Decodable {
     let country: String
     let joiningDate: String
     let mobiles: [MobileDTO]?
+    let createdAt: String?
+    let updatedAt: String?
+    let deletedAt: String?
     
     enum CodingKeys: String, CodingKey {
         case id, name, designation, department, email, city, country, mobiles
         case isActive = "is_active"
         case imgURL = "img_url"
         case joiningDate = "joining_date"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+        case deletedAt = "deleted_at"
     }
 }
 

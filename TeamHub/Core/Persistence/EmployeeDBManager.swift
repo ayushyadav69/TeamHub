@@ -42,7 +42,9 @@ extension EmployeeDBManager {
                 )
             },
             syncStatus: syncStatus.rawValue,
-            isDeleted: false
+            createdAt: employee.createdAt,
+            updatedAt: employee.updatedAt,
+            deletedAt: employee.deletedAt
         )
         
         context.insert(entity)
@@ -69,7 +71,7 @@ extension EmployeeDBManager {
         entity.city = employee.city
         entity.country = employee.country
         entity.joiningDate = employee.joiningDate
-        
+        entity.updatedAt = employee.updatedAt
         entity.mobiles = employee.mobiles.map {
             MobileEntity(
                 id: $0.id,
@@ -96,7 +98,7 @@ extension EmployeeDBManager {
             return
         }
         
-        entity.isDeleted = true
+        entity.deletedAt = Date.now
         entity.syncStatus = SyncStatus.deleted.rawValue
         
         try context.save()
@@ -116,7 +118,7 @@ extension EmployeeDBManager {
         
         let predicate = #Predicate<EmployeeEntity> { entity in
             
-            !entity.isDeleted && entity.syncStatus == "synced"
+            entity.deletedAt == nil && entity.syncStatus == "synced"
             
             &&
             (search == nil || entity.name.localizedStandardContains(search!))
@@ -244,7 +246,7 @@ extension EmployeeDBManager {
             // ONLY pending
             entity.syncStatus != "synced"
             &&
-            !entity.isDeleted
+            entity.deletedAt == nil
             
             // SEARCH
             &&
@@ -293,7 +295,9 @@ extension EmployeeDBManager {
             joiningDate: Date(),
             mobiles: [],
             syncStatus: SyncStatus.deleted.rawValue,
-            isDeleted: true
+            createdAt: Date(),
+            updatedAt:Date(),
+            deletedAt:Date()
         )
         
         context.insert(entity)

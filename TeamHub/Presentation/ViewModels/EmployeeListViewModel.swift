@@ -35,7 +35,7 @@ final class EmployeeListViewModel {
     private var currentPage = 1
     private let pageSize = 10
     private var hasMore = true
-    private var hasLoaded = false
+    private(set) var hasLoaded = false
     
     // MARK: - Query
     
@@ -177,4 +177,6 @@ final class EmployeeListViewModel {
         
         return last.id == currentItem.id
     }
+    
+    
 }
