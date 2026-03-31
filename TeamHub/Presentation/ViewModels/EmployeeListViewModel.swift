@@ -17,10 +17,14 @@ final class EmployeeListViewModel {
     
     private let fetchEmployeesUseCase: FetchEmployeesUseCase
     private let deleteEmployeeUseCase: DeleteEmployeeUseCase
+    private let fetchFiltersUseCase: FetchFiltersUseCase
     
     // MARK: - State
     
     var employees: [Employee] = []
+    
+    var availableDesignations: [String] = []
+    var availableDepartments: [String] = []
     
     var isLoading = false
     var isLoadingMore = false
@@ -41,10 +45,12 @@ final class EmployeeListViewModel {
     
     init(
         fetchEmployeesUseCase: FetchEmployeesUseCase,
-        deleteEmployeeUseCase: DeleteEmployeeUseCase
+        deleteEmployeeUseCase: DeleteEmployeeUseCase,
+        fetchFiltersUseCase: FetchFiltersUseCase   // add this
     ) {
         self.fetchEmployeesUseCase = fetchEmployeesUseCase
         self.deleteEmployeeUseCase = deleteEmployeeUseCase
+        self.fetchFiltersUseCase = fetchFiltersUseCase
     }
     
     func loadInitial() async {
@@ -81,15 +87,15 @@ final class EmployeeListViewModel {
         } catch {
             
             //  Ignore cancelled requests
-            if let urlError = error as? URLError,
-               urlError.code == .cancelled {
+            if (error as? URLError)?.code == .cancelled {
+                print(" Request cancelled — ignoring")
                 return
             }
             
             errorMessage = (error as? APIError)?.message ?? "Something went wrong"
         }
         
-//        isLoading = false
+        //        isLoading = false
     }
     
     func loadNextPage() async {
@@ -124,6 +130,19 @@ final class EmployeeListViewModel {
         }
         
         isLoadingMore = false
+    }
+    
+    func loadFilters() async {
+        
+        do {
+            let filters = try await fetchFiltersUseCase.execute()
+            
+            availableDesignations = filters.designations
+            availableDepartments = filters.departments
+            
+        } catch {
+            print(" Failed to load filters:", error)
+        }
     }
     
     func refresh() async {

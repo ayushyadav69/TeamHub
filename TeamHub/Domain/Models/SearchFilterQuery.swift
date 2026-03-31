@@ -10,8 +10,8 @@ import Foundation
 struct SearchFilterQuery {
     
     let searchText: String?
-    let designations: [String] = []
-    let departments: [String] = []
+    let designations: [String]
+    let departments: [String] 
     let isActive: Bool?
 }
 
