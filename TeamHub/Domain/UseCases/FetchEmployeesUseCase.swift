@@ -11,7 +11,8 @@ protocol FetchEmployeesUseCase {
     
     func execute(
         query: SearchFilterQuery?,
-        page: EmployeePage
+        page: EmployeePage,
+        force: Bool
     ) async throws -> [Employee]
 }
 
@@ -33,19 +34,21 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
     
     func execute(
         query: SearchFilterQuery?,
-        page: EmployeePage
+        page: EmployeePage,
+        force: Bool
     ) async throws -> [Employee] {
         
         // Trigger sync ONLY for normal list
-        if query == nil && networkMonitor.isConnected {
-            Task {
-                await syncManager.sync()
-            }
-        }
+//        if query == nil && networkMonitor.isConnected {
+//            Task {
+//                await syncManager.sync()
+//            }
+//        }
         
         return try await repository.fetchAll(
             query: query,
-            page: page
+            page: page,
+            force: force
         )
     }
 }

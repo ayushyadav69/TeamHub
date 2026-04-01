@@ -31,4 +31,5 @@ protocol EmployeeLocalDataSource {
     // MARK: - Helpers
     
     func exists(id: String) async throws -> Bool
+    func deleteAllSynced() async throws
 }

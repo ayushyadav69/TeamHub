@@ -62,13 +62,13 @@ final class EmployeeListViewModel {
             self?.reloadTask = Task {
                 try? await Task.sleep(nanoseconds: 300_000_000)
                 self?.hasLoaded = false
-                await self?.loadInitial()
+                await self?.loadInitial(force: false)
             }
         }
     }
     
     
-    func loadInitial() async {
+    func loadInitial(force: Bool) async {
         
         guard !isLoading else { return }
         // Prevent reload
@@ -86,7 +86,8 @@ final class EmployeeListViewModel {
         do {
             let result = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
-                page: EmployeePage(page: currentPage, pageSize: pageSize)
+                page: EmployeePage(page: currentPage, pageSize: pageSize),
+                force: force
             )
             
             employees = result
@@ -124,7 +125,8 @@ final class EmployeeListViewModel {
             
             let result = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
-                page: EmployeePage(page: nextPage, pageSize: pageSize)
+                page: EmployeePage(page: nextPage, pageSize: pageSize),
+                force: false
             )
             
             if !result.isEmpty {
@@ -162,14 +164,14 @@ final class EmployeeListViewModel {
     
     func refresh() async {
         hasLoaded = false
-        await loadInitial()
+        await loadInitial(force: true)
     }
     
     func applyQuery(_ query: SearchFilterQuery?) async {
         
         currentQuery = query
         hasLoaded = false
-        await loadInitial()
+        await loadInitial(force: false)
     }
     
     func deleteEmployee(id: String) async {

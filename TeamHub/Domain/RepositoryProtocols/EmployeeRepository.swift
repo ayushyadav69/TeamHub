@@ -11,7 +11,8 @@ protocol EmployeeRepository {
     
     func fetchAll(
         query: SearchFilterQuery?,
-        page: EmployeePage
+        page: EmployeePage,
+        force: Bool
     ) async throws -> [Employee]
     
     func fetchDetail(id: String) async throws -> EmployeeDetail

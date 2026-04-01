@@ -54,7 +54,7 @@ struct EmployeeListView: View {
                     
                     Button("Retry") {
                         Task {
-                            await viewModel.loadInitial()
+                            await viewModel.loadInitial(force: true)
                         }
                     }
                 }
@@ -102,7 +102,7 @@ struct EmployeeListView: View {
             }
         }
         .task {
-            await viewModel.loadInitial()
+            await viewModel.loadInitial(force: false)
             await viewModel.loadFilters()
         }
         .navigationTitle("Employees")

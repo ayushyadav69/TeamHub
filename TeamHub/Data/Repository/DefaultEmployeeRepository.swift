@@ -37,7 +37,8 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     
     func fetchAll(
         query: SearchFilterQuery?,
-        page: EmployeePage
+        page: EmployeePage,
+        force: Bool
     ) async throws -> [Employee] {
         
         // QUERY FLOW
@@ -70,6 +71,10 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             
             return synced
         }
+        
+//        if force, networkMonitor.isConnected {
+//            try await local.deleteAllSynced()
+//        }
         
         // NORMAL FLOW
         

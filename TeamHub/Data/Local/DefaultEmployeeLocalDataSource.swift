@@ -80,4 +80,8 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
     func insertDeletedPlaceholder(id: String) async throws {
         try dbManager.insertDeletedPlaceholder(id: id)
     }
+    
+    func deleteAllSynced() async throws {
+        try dbManager.deleteAllSynced()
+    }
 }

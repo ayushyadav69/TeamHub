@@ -119,7 +119,8 @@ extension EmployeeDBManager {
         
         let predicate = #Predicate<EmployeeEntity> { entity in
             
-            entity.deletedAt == nil && entity.syncStatus == "synced"
+//            entity.deletedAt == nil &&
+            entity.syncStatus == "synced"
             
             &&
             (search == nil || entity.name.localizedStandardContains(search!))
@@ -327,5 +328,22 @@ extension EmployeeDBManager {
         
         context.insert(entity)
         try context.save()
+    }
+    
+    func deleteAllSynced() throws {
+        
+        let descriptor = FetchDescriptor<EmployeeEntity>(
+            predicate: #Predicate {
+                $0.syncStatus == "synced"
+            }
+        )
+        
+        let results = try context.fetch(descriptor)
+        
+        for entity in results {
+            context.delete(entity)
+        }
+        
+        try save()
     }
 }

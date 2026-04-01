@@ -163,6 +163,9 @@ final class SyncManager {
         
         let response = try await remote.sync(cursor: cursor)
         
+        if response.employees.isEmpty {
+            return
+        }
         try dbManager.applyServerChanges(response.employees.map { $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)})
         
         cursorStore.save(response.nextCursor.seq)
