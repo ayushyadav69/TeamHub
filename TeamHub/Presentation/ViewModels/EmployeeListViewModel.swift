@@ -30,6 +30,9 @@ final class EmployeeListViewModel {
     var isLoadingMore = false
     var errorMessage: String?
     
+    private var observerId: UUID?
+    private var reloadTask: Task<Void, Never>?
+    
     // MARK: - Pagination
     
     private var currentPage = 1
@@ -51,7 +54,19 @@ final class EmployeeListViewModel {
         self.fetchEmployeesUseCase = fetchEmployeesUseCase
         self.deleteEmployeeUseCase = deleteEmployeeUseCase
         self.fetchFiltersUseCase = fetchFiltersUseCase
+        
+        observerId = DataChangeNotifier.shared.addObserver { [weak self] in
+            
+            self?.reloadTask?.cancel()
+            
+            self?.reloadTask = Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                self?.hasLoaded = false
+                await self?.loadInitial()
+            }
+        }
     }
+    
     
     func loadInitial() async {
         

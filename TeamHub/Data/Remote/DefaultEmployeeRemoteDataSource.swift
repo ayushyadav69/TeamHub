@@ -72,4 +72,10 @@ final class DefaultEmployeeRemoteDataSource: EmployeeRemoteDataSource {
         let request = FetchFiltersRequest()
         return try await apiClient.send(request)
     }
+    
+    func sync(cursor: Int) async throws -> SyncDataDTO {
+        let request = SyncRequest(cursor: cursor)
+        let response = try await apiClient.send(request)
+        return response.data
+    }
 }

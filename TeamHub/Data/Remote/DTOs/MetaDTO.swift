@@ -13,11 +13,13 @@ struct MetaDTO: Decodable {
     let page: Int
     let pageSize: Int
     let hasNextPage: Bool
+    let latestUpdatedSeq: Int
     
     enum CodingKeys: String, CodingKey {
         case totalCount = "total_count"
         case page
         case pageSize = "page_size"
         case hasNextPage = "has_next_page"
+        case latestUpdatedSeq = "latest_updated_seq"
     }
 }

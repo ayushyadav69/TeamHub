@@ -51,7 +51,7 @@ extension EmployeeDBManager {
         try context.save()
     }
     
-    func update(_ employee: EmployeeDetail) throws {
+    func update(_ employee: EmployeeDetail, syncStatus: SyncStatus) throws {
         
         let id = employee.id
         let descriptor = FetchDescriptor<EmployeeEntity>(
@@ -72,6 +72,7 @@ extension EmployeeDBManager {
         entity.country = employee.country
         entity.joiningDate = employee.joiningDate
         entity.updatedAt = employee.updatedAt
+        entity.deletedAt = employee.deletedAt
         entity.mobiles = employee.mobiles.map {
             MobileEntity(
                 id: $0.id,
@@ -82,8 +83,8 @@ extension EmployeeDBManager {
         
         // Sync logic
         if entity.syncStatus != SyncStatus.created.rawValue {
-            entity.syncStatus = SyncStatus.updated.rawValue
-        } 
+            entity.syncStatus = syncStatus.rawValue
+        }
         
         try context.save()
     }
@@ -138,11 +139,11 @@ extension EmployeeDBManager {
         }
         
         var descriptor = FetchDescriptor<EmployeeEntity>(
-            predicate: predicate
-//            sortBy: [
-//                SortDescriptor(\.name),
-//                SortDescriptor(\.id)
-//            ]
+            predicate: predicate,
+            sortBy: [
+                SortDescriptor(\EmployeeEntity.createdAt, order: .reverse)
+//                SortDescriptor(\EmployeeEntity.id)
+            ]
         )
         
         descriptor.fetchLimit = page.pageSize
@@ -278,6 +279,30 @@ extension EmployeeDBManager {
         )
         
         return try context.fetch(descriptor)
+    }
+    
+    func applyServerChanges(_ employees: [EmployeeDetail]) throws {
+        
+        for dto in employees {
+            
+            let id = dto.id
+            
+            if let existing = try fetchDetail(id: id) {
+                
+                // IMPORTANT: don't overwrite pending local changes
+                if existing.syncStatus != SyncStatus.synced.rawValue {
+                    continue
+                }
+                
+                try update(dto, syncStatus: .synced)
+                
+            } else {
+                
+                try insert(dto, syncStatus: .synced)
+            }
+        }
+        
+        try save()
     }
     
     func insertDeletedPlaceholder(id: String) throws {

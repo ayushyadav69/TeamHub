@@ -51,6 +51,9 @@ struct RootView: View {
                 }
             }
         }
+        .task {
+            container.syncManager.startAutoSync()
+        }
     }
 }
 

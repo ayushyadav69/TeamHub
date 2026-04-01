@@ -15,7 +15,7 @@ protocol EmployeeLocalDataSource {
         ) async throws -> [Employee]
     
     func insert(_ employee: EmployeeDetail, syncStatus: SyncStatus) async throws
-    func update(_ employee: EmployeeDetail) async throws
+    func update(_ employee: EmployeeDetail, syncStatus: SyncStatus) async throws
     func delete(id: String) async throws
     
     func fetchDetail(id: String) async throws -> EmployeeDetail

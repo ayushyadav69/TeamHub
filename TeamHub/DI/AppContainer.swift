@@ -20,6 +20,10 @@ final class AppContainer {
         DefaultNetworkMonitor()
     }()
     
+    lazy var curserStore: CursorStore = {
+        CursorStore()
+    }()
+    
     lazy var dateParser: DateParsing = {
         DefaultDateParser()
     }()
@@ -73,7 +77,8 @@ final class AppContainer {
             networkMonitor: networkMonitor,
             dateParser: dateParser,
             dateParserISO: dateParserISO,
-            imageUploader: imageUploader
+            imageUploader: imageUploader,
+            cursorStore: curserStore
         )
     }()
     
@@ -83,7 +88,10 @@ final class AppContainer {
         SyncManager(
             dbManager: employeeDBManager,
             remote: employeeRemoteDataSource,
-            networkMonitor: networkMonitor
+            networkMonitor: networkMonitor,
+            dateParser: dateParser,
+            dateParserISO: dateParserISO,
+            cursorStore: curserStore
         )
     }()
 }

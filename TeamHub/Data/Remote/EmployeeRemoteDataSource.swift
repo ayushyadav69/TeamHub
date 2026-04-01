@@ -20,4 +20,5 @@ protocol EmployeeRemoteDataSource {
     func updateEmployee(_ employee: EmployeeDetail) async throws
     func deleteEmployee(id: String) async throws
     func fetchFilters() async throws -> FiltersResponseDTO
+    func sync(cursor: Int) async throws -> SyncDataDTO
 }

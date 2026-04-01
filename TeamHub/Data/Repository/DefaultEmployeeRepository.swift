@@ -15,6 +15,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     private let dateParser: DateParsing
     private let dateParserISO: DateParsing
     private let imageUploader: ImageUploader
+    private let cursorStore: CursorStore
     
     init(
         remote: EmployeeRemoteDataSource,
@@ -22,7 +23,8 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         networkMonitor: NetworkMonitor,
         dateParser: DateParsing,
         dateParserISO: DateParsing,
-        imageUploader: ImageUploader
+        imageUploader: ImageUploader,
+        cursorStore: CursorStore
     ) {
         self.remote = remote
         self.local = local
@@ -30,6 +32,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         self.dateParser = dateParser
         self.dateParserISO = dateParserISO
         self.imageUploader = imageUploader
+        self.cursorStore = cursorStore
     }
     
     func fetchAll(
@@ -83,6 +86,10 @@ final class DefaultEmployeeRepository: EmployeeRepository {
                 query: nil,
                 page: page
             )
+            
+            if page.page == 1 {
+                cursorStore.save(response.meta.latestUpdatedSeq)
+            }
             
             let employees = response.data.map {
                 $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
@@ -140,7 +147,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         if try await local.exists(id: employee.id) {
             
             // Update existing
-            try await local.update(employee)
+            try await local.update(employee, syncStatus: .updated)
             
         } else {
             

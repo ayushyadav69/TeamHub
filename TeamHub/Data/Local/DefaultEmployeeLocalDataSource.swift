@@ -29,8 +29,8 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
         try dbManager.insert(employee, syncStatus: syncStatus)
     }
     
-    func update(_ employee: EmployeeDetail) async throws {
-        try dbManager.update(employee)
+    func update(_ employee: EmployeeDetail, syncStatus: SyncStatus) async throws {
+        try dbManager.update(employee, syncStatus: syncStatus)
     }
     
     func delete(id: String) async throws {
