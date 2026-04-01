@@ -13,7 +13,9 @@ final class DefaultNetworkMonitor: NetworkMonitor {
     private let monitor = NWPathMonitor()
     private let queue = DispatchQueue(label: "NetworkMonitor")
     
-    private(set) var isConnected: Bool = true
+    private(set) var isConnected: Bool = false
+    
+    var onReconnect: (() -> Void)? //  ADD THIS
     
     init() {
         startMonitoring()
@@ -22,7 +24,20 @@ final class DefaultNetworkMonitor: NetworkMonitor {
     private func startMonitoring() {
         
         monitor.pathUpdateHandler = { [weak self] path in
-            self?.isConnected = path.status == .satisfied
+            
+            guard let self else { return }
+            
+            let wasConnected = self.isConnected
+            let nowConnected = path.status == .satisfied
+            
+            self.isConnected = nowConnected
+            
+            //  Detect reconnect
+            if !wasConnected && nowConnected {
+                DispatchQueue.main.async {
+                    self.onReconnect?()
+                }
+            }
         }
         
         monitor.start(queue: queue)

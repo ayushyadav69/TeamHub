@@ -119,7 +119,8 @@ extension EmployeeDBManager {
         
         let predicate = #Predicate<EmployeeEntity> { entity in
             
-//            entity.deletedAt == nil &&
+//            entity.deletedAt == nil
+//            &&
             entity.syncStatus == "synced"
             
             &&
@@ -142,8 +143,8 @@ extension EmployeeDBManager {
         var descriptor = FetchDescriptor<EmployeeEntity>(
             predicate: predicate,
             sortBy: [
-                SortDescriptor(\EmployeeEntity.createdAt, order: .reverse)
-//                SortDescriptor(\EmployeeEntity.id)
+                SortDescriptor(\EmployeeEntity.createdAt, order: .reverse),
+                SortDescriptor(\EmployeeEntity.id)
             ]
         )
         

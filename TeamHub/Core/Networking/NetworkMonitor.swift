@@ -9,4 +9,5 @@ import Foundation
 
 protocol NetworkMonitor {
     var isConnected: Bool { get }
+    var onReconnect: (() -> Void)? { get set }
 }

@@ -153,4 +153,19 @@ extension AppContainer {
             networkMonitor: networkMonitor
         )
     }
+    
+    func setupNetworkSync() {
+        
+        networkMonitor.onReconnect = { [weak self] in
+            
+            guard let self else { return }
+            
+            Task {
+                print(" Reconnected → triggering sync")
+                
+                await self.syncManager.sync()
+//                await self.syncManager.pullSync()
+            }
+        }
+    }
 }
