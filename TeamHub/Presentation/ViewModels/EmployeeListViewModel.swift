@@ -18,6 +18,7 @@ final class EmployeeListViewModel {
     private let fetchEmployeesUseCase: FetchEmployeesUseCase
     private let deleteEmployeeUseCase: DeleteEmployeeUseCase
     private let fetchFiltersUseCase: FetchFiltersUseCase
+    private let clearDBSyncUseCase: ClearDBSyncedUseCase
     
     // MARK: - State
     
@@ -49,27 +50,34 @@ final class EmployeeListViewModel {
     init(
         fetchEmployeesUseCase: FetchEmployeesUseCase,
         deleteEmployeeUseCase: DeleteEmployeeUseCase,
-        fetchFiltersUseCase: FetchFiltersUseCase   // add this
+        fetchFiltersUseCase: FetchFiltersUseCase ,
+        clearDBSyncUseCase: ClearDBSyncedUseCase
     ) {
         self.fetchEmployeesUseCase = fetchEmployeesUseCase
         self.deleteEmployeeUseCase = deleteEmployeeUseCase
         self.fetchFiltersUseCase = fetchFiltersUseCase
+        self.clearDBSyncUseCase = clearDBSyncUseCase
         
         observerId = DataChangeNotifier.shared.addObserver { [weak self] in
             
-            self?.reloadTask?.cancel()
+            guard let self else { return }
             
-            self?.reloadTask = Task {
+            //  Don't interfere if already loading
+            guard !self.isLoading else { return }
+            
+            self.reloadTask?.cancel()
+            
+            self.reloadTask = Task {
                 try? await Task.sleep(nanoseconds: 300_000_000)
-                self?.hasLoaded = false
-                await self?.loadInitial(force: false)
+                self.hasLoaded = false
+                await self.loadInitial()
             }
         }
     }
     
     
-    func loadInitial(force: Bool) async {
-        
+    func loadInitial() async {
+        print("entered initial load")
         guard !isLoading else { return }
         // Prevent reload
         guard !hasLoaded else { return }
@@ -82,12 +90,12 @@ final class EmployeeListViewModel {
         
         currentPage = 1
         hasMore = true
-        
+        print("entering first page load")
         do {
+            print("entered first page load")
             let result = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
-                page: EmployeePage(page: currentPage, pageSize: pageSize),
-                force: force
+                page: EmployeePage(page: currentPage, pageSize: pageSize)
             )
             
             employees = result
@@ -125,8 +133,7 @@ final class EmployeeListViewModel {
             
             let result = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
-                page: EmployeePage(page: nextPage, pageSize: pageSize),
-                force: false
+                page: EmployeePage(page: nextPage, pageSize: pageSize)
             )
             
             if !result.isEmpty {
@@ -163,15 +170,23 @@ final class EmployeeListViewModel {
     }
     
     func refresh() async {
-        hasLoaded = false
-        await loadInitial(force: true)
+        Task {
+            do {
+                try await clearDBSyncUseCase.execute()
+//                employees = []
+            } catch {
+                print("Unable to clear DB")
+            }
+            hasLoaded = false
+            await loadInitial()
+        }
     }
     
     func applyQuery(_ query: SearchFilterQuery?) async {
         
         currentQuery = query
         hasLoaded = false
-        await loadInitial(force: false)
+        await loadInitial()
     }
     
     func deleteEmployee(id: String) async {

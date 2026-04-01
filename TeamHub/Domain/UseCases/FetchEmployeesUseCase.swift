@@ -11,8 +11,7 @@ protocol FetchEmployeesUseCase {
     
     func execute(
         query: SearchFilterQuery?,
-        page: EmployeePage,
-        force: Bool
+        page: EmployeePage
     ) async throws -> [Employee]
 }
 
@@ -34,8 +33,7 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
     
     func execute(
         query: SearchFilterQuery?,
-        page: EmployeePage,
-        force: Bool
+        page: EmployeePage
     ) async throws -> [Employee] {
         
         // Trigger sync ONLY for normal list
@@ -47,8 +45,7 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
         
         return try await repository.fetchAll(
             query: query,
-            page: page,
-            force: force
+            page: page
         )
     }
 }

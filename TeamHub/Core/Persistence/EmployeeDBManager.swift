@@ -110,6 +110,8 @@ extension EmployeeDBManager {
         page: EmployeePage
     ) throws -> [EmployeeEntity] {
         
+        let status = SyncStatus.synced.rawValue
+        
         let search = query?.searchText?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
@@ -121,7 +123,7 @@ extension EmployeeDBManager {
             
 //            entity.deletedAt == nil
 //            &&
-            entity.syncStatus == "synced"
+            entity.syncStatus == status
             
             &&
             (search == nil || entity.name.localizedStandardContains(search!))
@@ -199,8 +201,10 @@ extension EmployeeDBManager {
     
     func fetchPending() throws -> [EmployeeEntity] {
         
+        let status = SyncStatus.synced.rawValue
+        
         let descriptor = FetchDescriptor<EmployeeEntity>(
-            predicate: #Predicate { $0.syncStatus != "synced" }
+            predicate: #Predicate { $0.syncStatus != status }
         )
         
         return try context.fetch(descriptor)
@@ -237,6 +241,8 @@ extension EmployeeDBManager {
         query: SearchFilterQuery?
     ) throws -> [EmployeeEntity] {
         
+        let status = SyncStatus.synced.rawValue
+        
         let search = query?.searchText?
             .trimmingCharacters(in: .whitespacesAndNewlines)
         
@@ -247,7 +253,7 @@ extension EmployeeDBManager {
         let predicate = #Predicate<EmployeeEntity> { entity in
             
             // ONLY pending
-            entity.syncStatus != "synced"
+            entity.syncStatus != status
             &&
             entity.deletedAt == nil
             
@@ -333,9 +339,11 @@ extension EmployeeDBManager {
     
     func deleteAllSynced() throws {
         
+        let status = SyncStatus.synced.rawValue
+        
         let descriptor = FetchDescriptor<EmployeeEntity>(
             predicate: #Predicate {
-                $0.syncStatus == "synced"
+                $0.syncStatus == status
             }
         )
         

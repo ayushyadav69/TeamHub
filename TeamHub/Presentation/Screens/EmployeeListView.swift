@@ -27,7 +27,8 @@ struct EmployeeListView: View {
             wrappedValue: EmployeeListViewModel(
                 fetchEmployeesUseCase: container.makeFetchEmployeesUseCase(),
                 deleteEmployeeUseCase: container.makeDeleteEmployeeUseCase(),
-                fetchFiltersUseCase: container.makeFetchFiltersUseCase()
+                fetchFiltersUseCase: container.makeFetchFiltersUseCase(),
+                clearDBSyncUseCase: container.makeClearDBSyncUseCase()
             )
         )
         self.onNavigate = onNavigate
@@ -54,7 +55,7 @@ struct EmployeeListView: View {
                     
                     Button("Retry") {
                         Task {
-                            await viewModel.loadInitial(force: true)
+                            await viewModel.loadInitial()
                         }
                     }
                 }
@@ -102,7 +103,7 @@ struct EmployeeListView: View {
             }
         }
         .task {
-            await viewModel.loadInitial(force: false)
+            await viewModel.loadInitial()
             await viewModel.loadFilters()
         }
         .navigationTitle("Employees")

@@ -11,8 +11,7 @@ protocol EmployeeRepository {
     
     func fetchAll(
         query: SearchFilterQuery?,
-        page: EmployeePage,
-        force: Bool
+        page: EmployeePage
     ) async throws -> [Employee]
     
     func fetchDetail(id: String) async throws -> EmployeeDetail
@@ -21,4 +20,5 @@ protocol EmployeeRepository {
     func addEmployee(_ employee: EmployeeFormData) async throws
     func updateEmployee(_ employee: EmployeeFormData) async throws
     func deleteEmployee(id: String) async throws
+    func clearDBSynced() async throws
 }
