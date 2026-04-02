@@ -54,6 +54,7 @@ extension EmployeeDBManager {
     
     func update(_ employee: EmployeeDetail, syncStatus: SyncStatus) throws {
         
+        print("entered update")
         let id = employee.id
         let descriptor = FetchDescriptor<EmployeeEntity>(
             predicate: #Predicate { $0.id == id }
@@ -72,6 +73,7 @@ extension EmployeeDBManager {
         entity.city = employee.city
         entity.country = employee.country
         entity.joiningDate = employee.joiningDate
+        entity.createdAt = employee.createdAt
         entity.updatedAt = employee.updatedAt
         entity.deletedAt = employee.deletedAt
         entity.mobiles = employee.mobiles.map {
@@ -87,7 +89,9 @@ extension EmployeeDBManager {
             entity.syncStatus = syncStatus.rawValue
         }
         
+        print("goona try save")
         try context.save()
+        print("gonna exit update")
     }
     
     func delete(id: String) throws {
@@ -179,7 +183,7 @@ extension EmployeeDBManager {
     func fetchFilters() throws -> Filters {
         
         let descriptor = FetchDescriptor<EmployeeEntity>(
-            predicate: #Predicate { !$0.isDeleted }
+            predicate: #Predicate { $0.deletedAt == nil }
         )
         
         let employees = try context.fetch(descriptor)

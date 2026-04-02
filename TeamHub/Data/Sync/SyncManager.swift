@@ -82,6 +82,7 @@ final class SyncManager {
                 let newID = try await remote.createEmployee(
                     dbManager.toEmployeeDetail(entity)
                 )
+                print(entity.id)
                 print("below created employee")
                 try dbManager.replaceID(oldID: entity.id, newID: newID)
                 
@@ -110,7 +111,7 @@ final class SyncManager {
             dbManager.deletePermanent(entity)
         } else {
             entity.syncStatus = SyncStatus.synced.rawValue
-            dbManager.deletePermanent(entity)
+//            dbManager.deletePermanent(entity)
         }
         
         try dbManager.save()
