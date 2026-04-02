@@ -110,7 +110,7 @@ final class SyncManager {
             dbManager.deletePermanent(entity)
         } else {
             entity.syncStatus = SyncStatus.synced.rawValue
-//            dbManager.deletePermanent(entity)
+            dbManager.deletePermanent(entity)
         }
         
         try dbManager.save()

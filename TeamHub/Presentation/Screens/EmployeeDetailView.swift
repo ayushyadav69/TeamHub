@@ -192,6 +192,8 @@ private extension EmployeeDetailView {
                 value: "\(employee.city), \(employee.country)"
             )
             
+            infoRow(title: "Joining Date", value: employee.joiningDate.formatted(date: .numeric, time: .omitted))
+            
             statusRow(employee)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

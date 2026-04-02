@@ -102,11 +102,12 @@ struct EmployeeListView: View {
                 Text("No employees")
             }
         }
+        .navigationTitle("Employees")
+//        .navigationBarTitleDisplayMode(.large)
         .task {
             await viewModel.loadInitial()
             await viewModel.loadFilters()
         }
-        .navigationTitle("Employees")
         .searchable(text: $searchText)
         .onChange(of: searchText) { _, newValue in
             

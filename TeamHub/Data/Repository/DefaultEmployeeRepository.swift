@@ -51,8 +51,8 @@ final class DefaultEmployeeRepository: EmployeeRepository {
                     query: query,
                     page: page
                 )
-                
-                return response.data.map { $0.toEmployee() }
+                let result = response.data.filter{ $0.deletedAt == "" }
+                return result.map { $0.toEmployee() }
             }
             
             // OFFLINE → DB
@@ -78,39 +78,55 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             page: page
         )
         
-        // CACHE MISS → FETCH FROM API
-        if synced.isEmpty,
-           networkMonitor.isConnected {
-            
-            let response = try await remote.fetchEmployees(
-                query: nil,
-                page: page
-            )
-            
-            if page.page == 1 {
-                cursorStore.save(response.meta.latestUpdatedSeq)
-            }
-            
-            let employees = response.data.map {
-                $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
-            }
-            
-            // Save into DB
-            for employee in employees {
-                try await local.insert(employee, syncStatus: .synced)
-            }
-            
-            // Fetch again from DB
-            synced = try await local.fetchSynced(
-                query: nil,
-                page: page
-            )
+        if synced.isEmpty, networkMonitor.isConnected {
+            synced = try await fetchNormalListFromAPI(page: page)
         }
         
         // Prepend pending only on first page
         if page.page == 1 {
             let pending = try await local.fetchPending(query: nil)
             return pending + synced
+        }
+        
+        return synced
+    }
+    
+    private func fetchNormalListFromAPI(page: EmployeePage) async throws -> [Employee] {
+        
+        
+        
+        // CACHE MISS → FETCH FROM API
+        let response = try await remote.fetchEmployees(
+            query: nil,
+            page: page
+        )
+        
+        if page.page == 1 {
+            cursorStore.save(response.meta.latestUpdatedSeq)
+        }
+        
+        if response.data.isEmpty {
+            return []
+        }
+        
+        let employees = response.data.map {
+            $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
+        }
+        
+        // Save into DB
+        for employee in employees {
+            try await local.insert(employee, syncStatus: .synced)
+        }
+        
+        // Fetch again from DB
+        let synced = try await local.fetchSynced(
+            query: nil,
+            page: page
+        )
+        
+        if synced.isEmpty {
+            let nextPage = EmployeePage(page: page.page + 1, pageSize: page.pageSize)
+            return try await fetchNormalListFromAPI(page: nextPage)
         }
         
         return synced
@@ -128,7 +144,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         
         // STEP 2: Save to DB FIRST (offline-first)
         try await local.insert(employee, syncStatus: .created)
-        
+//        DataChangeNotifier.shared.notify()
         // STEP 3: Mark for sync (SyncManager handles API)
     }
     

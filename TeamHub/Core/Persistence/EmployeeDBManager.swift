@@ -13,6 +13,7 @@ final class EmployeeDBManager {
     static let shared = EmployeeDBManager()
     
     private let context: ModelContext
+    private var dbOffset = 0
     
     private init() {
         self.context = ModelContext(SharedModelContainer.container)
@@ -110,6 +111,11 @@ extension EmployeeDBManager {
         page: EmployeePage
     ) throws -> [EmployeeEntity] {
         
+        if page.page == 1 {
+            dbOffset = 0
+        }
+        
+        
         let status = SyncStatus.synced.rawValue
         
         let search = query?.searchText?
@@ -121,8 +127,8 @@ extension EmployeeDBManager {
         
         let predicate = #Predicate<EmployeeEntity> { entity in
             
-//            entity.deletedAt == nil
-//            &&
+            entity.deletedAt == nil
+            &&
             entity.syncStatus == status
             
             &&
@@ -145,15 +151,18 @@ extension EmployeeDBManager {
         var descriptor = FetchDescriptor<EmployeeEntity>(
             predicate: predicate,
             sortBy: [
-                SortDescriptor(\EmployeeEntity.createdAt, order: .reverse),
-                SortDescriptor(\EmployeeEntity.id)
+                SortDescriptor(\EmployeeEntity.createdAt, order: .reverse)
+//                SortDescriptor(\EmployeeEntity.id)
             ]
         )
         
         descriptor.fetchLimit = page.pageSize
-        descriptor.fetchOffset = page.offset
+        descriptor.fetchOffset = dbOffset
         
-        return try context.fetch(descriptor)
+        
+        let result = try context.fetch(descriptor)
+        dbOffset += result.count
+        return result
     }
     
     func fetchDetail(id: String) throws -> EmployeeEntity? {
@@ -291,6 +300,7 @@ extension EmployeeDBManager {
     
     func applyServerChanges(_ employees: [EmployeeDetail]) throws {
         
+    
         for dto in employees {
             
             let id = dto.id
@@ -303,7 +313,7 @@ extension EmployeeDBManager {
                 }
                 
                 try update(dto, syncStatus: .synced)
-                
+//                print(dto)
             } else {
                 
                 try insert(dto, syncStatus: .synced)
@@ -354,5 +364,7 @@ extension EmployeeDBManager {
         }
         
         try save()
+        
+        dbOffset = 0
     }
 }

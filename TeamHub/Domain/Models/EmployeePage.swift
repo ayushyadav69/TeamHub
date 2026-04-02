@@ -9,7 +9,7 @@ import Foundation
 
 struct EmployeePage {
     
-    let page: Int
+    var page: Int
     let pageSize: Int
     
     var offset: Int {

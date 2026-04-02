@@ -34,6 +34,7 @@ final class EmployeeFormViewModel {
     var city = ""
     var country = ""
     var isActive = true
+    var joiningDate: Date = Date.now
     
     var mobiles: [Mobile] = []
     var mobileTypes: [MobileType] = []
@@ -75,6 +76,7 @@ final class EmployeeFormViewModel {
         country = employee.country
         isActive = employee.isActive
         mobiles = employee.mobiles
+        joiningDate = employee.joiningDate
     }
     
     var nameError: String? {
@@ -163,8 +165,8 @@ final class EmployeeFormViewModel {
                 country: country,
                 isActive: isActive,
                 imageURL: selectedImageURL,
-                joiningDate: existingEmployee?.joiningDate ?? Date.now,
-                createdAt: existingEmployee?.createdAt ?? Date.now,
+                joiningDate: joiningDate,
+                createdAt: existingEmployee?.createdAt,
                 updatedAt: Date.now,
                 deletedAt: existingEmployee?.deletedAt,
                 mobiles: mobiles

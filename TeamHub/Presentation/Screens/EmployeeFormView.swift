@@ -89,6 +89,15 @@ struct EmployeeFormView: View {
                 Toggle("Active", isOn: $viewModel.isActive)
             }
             
+            Section {
+                DatePicker(
+                    "Joining Date",
+                    selection: $viewModel.joiningDate,
+                    in: ...Date.now,
+                    displayedComponents: .date
+                )
+            }
+            
             phoneSection
         }
         .onAppear {

@@ -60,17 +60,12 @@ final class EmployeeListViewModel {
         
         observerId = DataChangeNotifier.shared.addObserver { [weak self] in
             
-            guard let self else { return }
+            self?.reloadTask?.cancel()
             
-            //  Don't interfere if already loading
-            guard !self.isLoading else { return }
-            
-            self.reloadTask?.cancel()
-            
-            self.reloadTask = Task {
+            self?.reloadTask = Task {
                 try? await Task.sleep(nanoseconds: 300_000_000)
-                self.hasLoaded = false
-                await self.loadInitial()
+                self?.hasLoaded = false
+                await self?.loadInitial()
             }
         }
     }
