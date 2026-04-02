@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Filters {
+struct Filters: Codable {
     
     let designations: [String]
     let departments: [String]
@@ -15,7 +15,7 @@ struct Filters {
     let mobileTypes: [MobileType]
 }
 
-struct StatusFilter {
+struct StatusFilter: Codable {
     let label: String
     let value: Bool
 }

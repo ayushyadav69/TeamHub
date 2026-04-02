@@ -16,6 +16,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     private let dateParserISO: DateParsing
     private let imageUploader: ImageUploader
     private let cursorStore: CursorStore
+    private let filtersCache: FiltersCache
     
     init(
         remote: EmployeeRemoteDataSource,
@@ -24,7 +25,8 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         dateParser: DateParsing,
         dateParserISO: DateParsing,
         imageUploader: ImageUploader,
-        cursorStore: CursorStore
+        cursorStore: CursorStore,
+        filtersCache: FiltersCache
     ) {
         self.remote = remote
         self.local = local
@@ -33,6 +35,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         self.dateParserISO = dateParserISO
         self.imageUploader = imageUploader
         self.cursorStore = cursorStore
+        self.filtersCache = filtersCache
     }
     
     func fetchAll(
@@ -228,10 +231,23 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             
             let response = try await remote.fetchFilters()
             
-            return response.data.toDomain()
+            let filters = response.data.toDomain()
+            filtersCache.save(filters)
+            
+            return filters
         }
         
         return try await local.fetchFilters()
+    }
+    
+    func fetchFiltersForForm() async throws -> Filters {
+        if let cache = filtersCache.load() {
+            return cache
+        }
+        
+        let response = try await remote.fetchFilters()
+        
+        return response.data.toDomain()
     }
     
     func clearDBSynced() async throws {

@@ -9,6 +9,7 @@ import Foundation
 
 protocol FetchFiltersUseCase {
     func execute() async throws -> Filters
+    func forForm() async throws -> Filters
 }
 
 final class DefaultFetchFiltersUseCase: FetchFiltersUseCase {
@@ -21,5 +22,9 @@ final class DefaultFetchFiltersUseCase: FetchFiltersUseCase {
     
     func execute() async throws -> Filters {
         try await repository.fetchFilters()
+    }
+    
+    func forForm() async throws -> Filters {
+        try await repository.fetchFiltersForForm()
     }
 }

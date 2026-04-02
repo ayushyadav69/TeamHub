@@ -58,6 +58,10 @@ final class AppContainer {
         )
     }()
     
+    lazy var filtersCache: FiltersCache = {
+        FiltersCache()
+    }()
+    
     // MARK: - Remote
     
     lazy var employeeRemoteDataSource: EmployeeRemoteDataSource = {
@@ -78,7 +82,8 @@ final class AppContainer {
             dateParser: dateParser,
             dateParserISO: dateParserISO,
             imageUploader: imageUploader,
-            cursorStore: curserStore
+            cursorStore: curserStore,
+            filtersCache: filtersCache
         )
     }()
     

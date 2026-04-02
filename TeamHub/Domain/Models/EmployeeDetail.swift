@@ -32,7 +32,7 @@ struct Mobile: Hashable, Identifiable {
     var number: String
 }
 
-enum MobileType: String {
+enum MobileType: String, Codable {
     case home
     case office
     case other

@@ -22,4 +22,5 @@ protocol EmployeeRepository {
     func deleteEmployee(id: String) async throws
     func clearDBSynced() async throws
     func uploadPendingImages() async
+    func fetchFiltersForForm() async throws -> Filters
 }

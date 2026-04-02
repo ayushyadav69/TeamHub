@@ -116,7 +116,7 @@ final class EmployeeFormViewModel {
     
     func loadFilters() async {
         do {
-            let filters = try await fetchFiltersUseCase.execute()
+            let filters = try await fetchFiltersUseCase.forForm()
             
             mobileTypes = filters.mobileTypes
             designations = filters.designations
