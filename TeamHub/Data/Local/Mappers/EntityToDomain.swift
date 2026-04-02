@@ -16,7 +16,8 @@ extension EmployeeEntity {
             designation: designation,
             department: department,
             isActive: isActive,
-            imageURL: imageURL
+            imageURL: imageURL,
+            imageLocalPath: imageLocalPath
         )
     }
 }
@@ -35,6 +36,7 @@ extension EmployeeEntity {
             country: country,
             isActive: isActive,
             imageURL: imageURL,
+            imageLocalPath: imageLocalPath,
             joiningDate: joiningDate,
             createdAt: createdAt,
             updatedAt: updatedAt,

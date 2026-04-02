@@ -19,7 +19,7 @@ final class EmployeeEntity {
     var department: String
     var isActive: Bool
     var imageURL: String?
-    
+    var imageLocalPath: String?
     var email: String
     var city: String
     var country: String
@@ -42,6 +42,7 @@ final class EmployeeEntity {
         department: String,
         isActive: Bool,
         imageURL: String?,
+        imageLocalPath: String?,
         email: String,
         city: String,
         country: String,
@@ -58,6 +59,7 @@ final class EmployeeEntity {
         self.department = department
         self.isActive = isActive
         self.imageURL = imageURL
+        self.imageLocalPath = imageLocalPath
         self.email = email
         self.city = city
         self.country = country

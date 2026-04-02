@@ -167,6 +167,8 @@ extension AppContainer {
             Task {
                 print(" Reconnected → triggering sync")
                 
+                await self.employeeRepository.uploadPendingImages()
+                
                 await self.syncManager.sync()
 //                await self.syncManager.pullSync()
             }

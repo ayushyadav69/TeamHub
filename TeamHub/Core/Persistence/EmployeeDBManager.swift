@@ -31,6 +31,7 @@ extension EmployeeDBManager {
             department: employee.department,
             isActive: employee.isActive,
             imageURL: employee.imageURL,
+            imageLocalPath: employee.imageLocalPath,
             email: employee.email,
             city: employee.city,
             country: employee.country,
@@ -69,6 +70,7 @@ extension EmployeeDBManager {
         entity.department = employee.department
         entity.isActive = employee.isActive
         entity.imageURL = employee.imageURL
+        entity.imageLocalPath = employee.imageLocalPath
         entity.email = employee.email
         entity.city = employee.city
         entity.country = employee.country
@@ -336,6 +338,7 @@ extension EmployeeDBManager {
             department: "",
             isActive: false,
             imageURL: "",
+            imageLocalPath: "",
             email: "",
             city: "",
             country: "",
@@ -370,5 +373,19 @@ extension EmployeeDBManager {
         try save()
         
         dbOffset = 0
+    }
+    
+    func updateImage(id: String, url: String) throws {
+        
+        let descriptor = FetchDescriptor<EmployeeEntity>(
+            predicate: #Predicate { $0.id == id }
+        )
+        
+        guard let emp = try context.fetch(descriptor).first else { return }
+        
+        emp.imageURL = url
+        emp.imageLocalPath = nil   //  clear local file
+        
+        try context.save()
     }
 }

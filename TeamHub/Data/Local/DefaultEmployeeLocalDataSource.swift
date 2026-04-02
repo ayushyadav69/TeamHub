@@ -84,4 +84,8 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
     func deleteAllSynced() async throws {
         try dbManager.deleteAllSynced()
     }
+    
+    func updateImage(id: String, url: String) throws {
+        try dbManager.updateImage(id: id, url: url)
+    }
 }

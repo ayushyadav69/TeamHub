@@ -167,16 +167,31 @@ private extension EmployeeDetailView {
     
     private func profileImage(_ employee: EmployeeDetail) -> some View {
         
-        CachedAsyncImage(url: URL(string: employee.imageURL ?? "")) { image in
-            image
-                .resizable()
-                .scaledToFill()
-        } placeholder: {
-            Circle()
-                .fill(Color.secondary.opacity(0.2))
+        Group {
+            if let path = employee.imageLocalPath,
+               let data = ImageStorage.load(path: path),
+               let uiImage = UIImage(data: data) {
+                
+                Image(uiImage: uiImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 60, height: 60)
+                    .clipShape(Circle())
+                
+            } else {
+                
+                CachedAsyncImage(url: URL(string: employee.imageURL ?? "")) { image in
+                    image
+                        .resizable()
+                        .scaledToFill()
+                } placeholder: {
+                    Circle()
+                        .fill(Color.secondary.opacity(0.2))
+                }
+                .frame(width: 44, height: 44)
+                .clipShape(Circle())
+            }
         }
-        .frame(width: 80, height: 80)
-        .clipShape(Circle())
     }
     
     private func infoSection(_ employee: EmployeeDetail) -> some View {

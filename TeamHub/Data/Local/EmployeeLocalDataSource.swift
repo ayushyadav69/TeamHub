@@ -32,4 +32,5 @@ protocol EmployeeLocalDataSource {
     
     func exists(id: String) async throws -> Bool
     func deleteAllSynced() async throws
+    func updateImage(id: String, url: String) throws
 }

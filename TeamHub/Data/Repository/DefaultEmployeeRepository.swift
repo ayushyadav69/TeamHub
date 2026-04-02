@@ -138,13 +138,24 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         
         // STEP 1: Upload image if exists
         if let data = form.imageData {
-            let url = try await imageUploader.upload(data)
-            employee.imageURL = url
+            do {
+                let url = try await imageUploader.upload(data)
+                
+                employee.imageURL = url
+                employee.imageLocalPath = nil
+                
+            } catch {
+                // OFFLINE fallback
+                let path = ImageStorage.save(data)
+                
+                employee.imageURL = nil
+                employee.imageLocalPath = path
+            }
         }
         
         // STEP 2: Save to DB FIRST (offline-first)
         try await local.insert(employee, syncStatus: .created)
-//        DataChangeNotifier.shared.notify()
+        DataChangeNotifier.shared.notify()
         // STEP 3: Mark for sync (SyncManager handles API)
     }
     
@@ -154,9 +165,19 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         
         // STEP 1: Upload image if exists
         if let data = form.imageData {
-            let url = try await imageUploader.upload(data)
-            print("Uploaded URL:", url)
-            employee.imageURL = url
+            do {
+                let url = try await imageUploader.upload(data)
+                
+                employee.imageURL = url
+                employee.imageLocalPath = nil
+                
+            } catch {
+                // OFFLINE fallback
+                let path = ImageStorage.save(data)
+                
+                employee.imageURL = nil
+                employee.imageLocalPath = path
+            }
         }
         
         // Try finding in DB
@@ -171,6 +192,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             try await local.insert(employee, syncStatus: .updated)
 //            try await local.markAsUpdated(id: employee.id)
         }
+        DataChangeNotifier.shared.notify()
     }
     
     func deleteEmployee(id: String) async throws {
@@ -185,6 +207,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             try await local.insertDeletedPlaceholder(id: id)
 //            try await local.delete(id: id)
         }
+        DataChangeNotifier.shared.notify()
     }
     
     func fetchDetail(id: String) async throws -> EmployeeDetail {
@@ -213,5 +236,26 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     
     func clearDBSynced() async throws {
         try await local.deleteAllSynced()
+    }
+    
+    func uploadPendingImages() async {
+        
+        guard let employees = try? await local.fetchPending(query: nil) else { return }
+        
+        for emp in employees {
+            
+            guard let path = emp.imageLocalPath,
+                  let data = ImageStorage.load(path: path)
+            else { continue }
+            
+            do {
+                let url = try await imageUploader.upload(data)
+                
+                try local.updateImage(id: emp.id, url: url)
+                
+            } catch {
+                // still offline → ignore
+            }
+        }
     }
 }
