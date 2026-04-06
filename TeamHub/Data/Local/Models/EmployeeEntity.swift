@@ -23,7 +23,7 @@ final class EmployeeEntity {
     var email: String
     var city: String
     var country: String
-    var joiningDate: Date
+    var joiningDate: Date?
     
     // IMPORTANT (sync support)
     var syncStatus: String
@@ -46,7 +46,7 @@ final class EmployeeEntity {
         email: String,
         city: String,
         country: String,
-        joiningDate: Date,
+        joiningDate: Date?,
         mobiles: [MobileEntity],
         syncStatus: String,
         createdAt: Date?,

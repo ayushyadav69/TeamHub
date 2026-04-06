@@ -8,7 +8,7 @@
 import Foundation
 
 protocol DateFormatting {
-    func string(from date: Date) -> String
+    func string(from date: Date?) -> String
 }
 
 final class DefaultAPIDateFormatter: DateFormatting {
@@ -20,8 +20,11 @@ final class DefaultAPIDateFormatter: DateFormatting {
         formatter.dateFormat = "yyyy-MM-dd"
     }
     
-    func string(from date: Date) -> String {
-        formatter.string(from: date)
+    func string(from date: Date?) -> String {
+        if let date {
+            return formatter.string(from: date)
+        }
+        return ""
     }
 }
 
@@ -34,7 +37,10 @@ final class DefaultAPIDateFormatterISO: DateFormatting {
         formatter.formatOptions = [.withInternetDateTime]
     }
     
-    func string(from date: Date) -> String {
-        formatter.string(from: date)
+    func string(from date: Date?) -> String {
+        if let date {
+            return formatter.string(from: date)
+        }
+        return ""
     }
 }

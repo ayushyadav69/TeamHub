@@ -34,7 +34,7 @@ final class EmployeeFormViewModel {
     var city = ""
     var country = ""
     var isActive = true
-    var joiningDate: Date = Date.now
+    var joiningDate: Date?
     
     var mobiles: [Mobile] = []
     var mobileTypes: [MobileType] = []
@@ -76,7 +76,7 @@ final class EmployeeFormViewModel {
         country = employee.country
         isActive = employee.isActive
         mobiles = employee.mobiles
-        joiningDate = employee.joiningDate
+        joiningDate = employee.joiningDate 
     }
     
     var nameError: String? {

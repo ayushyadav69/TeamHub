@@ -83,7 +83,7 @@ private extension EmployeeDetailView {
     @ViewBuilder
     var content: some View {
         
-        if viewModel.isLoading {
+        if viewModel.isLoading && viewModel.initialLoad {
             loadingView
             
         } else if let error = viewModel.errorMessage {
@@ -175,7 +175,7 @@ private extension EmployeeDetailView {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 60, height: 60)
+                    .frame(width: 100, height: 100)
                     .clipShape(Circle())
                 
             } else {
@@ -188,7 +188,7 @@ private extension EmployeeDetailView {
                     Circle()
                         .fill(Color.secondary.opacity(0.2))
                 }
-                .frame(width: 44, height: 44)
+                .frame(width: 100, height: 100)
                 .clipShape(Circle())
             }
         }
@@ -207,7 +207,9 @@ private extension EmployeeDetailView {
                 value: "\(employee.city), \(employee.country)"
             )
             
-            infoRow(title: "Joining Date", value: employee.joiningDate.formatted(date: .numeric, time: .omitted))
+            if let date = employee.joiningDate {
+                infoRow(title: "Joining Date", value: date.formatted(date: .numeric, time: .omitted))
+            }
             
             statusRow(employee)
         }

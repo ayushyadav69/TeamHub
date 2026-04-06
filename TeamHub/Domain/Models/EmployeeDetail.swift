@@ -19,7 +19,7 @@ struct EmployeeDetail: Hashable {
     let isActive: Bool
     var imageURL: String?
     var imageLocalPath: String?
-    let joiningDate: Date
+    let joiningDate: Date?
     let createdAt: Date?
     let updatedAt: Date?
     let deletedAt: Date?

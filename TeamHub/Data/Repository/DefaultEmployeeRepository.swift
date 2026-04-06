@@ -215,12 +215,12 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     
     func fetchDetail(id: String) async throws -> EmployeeDetail {
         
-        if networkMonitor.isConnected {
-            
-            let response = try await remote.fetchEmployeeDetail(id: id)
-            
-            return response.data.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
-        }
+//        if networkMonitor.isConnected {
+//            
+//            let response = try await remote.fetchEmployeeDetail(id: id)
+//            
+//            return response.data.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
+//        }
         
         return try await local.fetchDetail(id: id)
     }

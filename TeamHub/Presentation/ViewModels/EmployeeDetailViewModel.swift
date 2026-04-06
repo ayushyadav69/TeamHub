@@ -25,6 +25,10 @@ final class EmployeeDetailViewModel {
     var errorMessage: String?
     
     private var hasLoaded = false
+    private(set) var initialLoad = true
+    
+    private var observerId: UUID?
+    private var reloadTask: Task<Void, Never>?
     
     // MARK: - Init
     
@@ -34,6 +38,17 @@ final class EmployeeDetailViewModel {
     ) {
         self.fetchEmployeeDetailUseCase = fetchEmployeeDetailUseCase
         self.deleteEmployeeUseCase = deleteEmployeeUseCase
+        
+        observerId = DataChangeNotifier.shared.addObserver { [weak self] in
+            
+            self?.reloadTask?.cancel()
+            
+            self?.reloadTask = Task {
+                try? await Task.sleep(nanoseconds: 300_000_000)
+                self?.hasLoaded = false
+                await self?.load(id: self?.employee?.id ?? "")
+            }
+        }
     }
     
     func load(id: String) async {
@@ -54,6 +69,7 @@ final class EmployeeDetailViewModel {
         }
         
         isLoading = false
+        initialLoad = false
     }
     
     func retry(id: String) async {

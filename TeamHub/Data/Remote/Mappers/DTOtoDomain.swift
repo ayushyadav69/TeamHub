@@ -46,7 +46,7 @@ extension EmployeeDTO {
             country: country,
             isActive: isActive,
             imageURL: imgURL,
-            joiningDate: dateParser.parse(joiningDate) ?? Date.now,
+            joiningDate: dateParser.parse(joiningDate) ,
             createdAt: dateParserISO.parse(createdAt ?? ""),
             updatedAt: dateParserISO.parse(updatedAt ?? ""),
             deletedAt: dateParserISO.parse(deletedAt ?? ""),

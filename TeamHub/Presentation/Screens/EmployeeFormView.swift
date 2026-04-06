@@ -15,6 +15,7 @@ struct EmployeeFormView: View {
     @State private var showImageSourceDialog = false
     @State private var showImagePicker = false
     @State private var sourceType: UIImagePickerController.SourceType = .photoLibrary
+    @State private var showDatePicker = false
     
     init(
         container: AppContainer,
@@ -90,12 +91,25 @@ struct EmployeeFormView: View {
             }
             
             Section {
-                DatePicker(
-                    "Joining Date",
-                    selection: $viewModel.joiningDate,
-                    in: ...Date.now,
-                    displayedComponents: .date
-                )
+                HStack {
+                    Text("Joining Date")
+                    
+                    Spacer()
+                    
+                    Text(
+                        viewModel.joiningDate?
+                            .formatted(date: .abbreviated, time: .omitted)
+                        ?? "---"
+                    )
+                    .foregroundColor(viewModel.joiningDate == nil ? .gray : .primary)
+                }
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    if viewModel.joiningDate == nil {
+                        viewModel.joiningDate = Date()
+                    }
+                    showDatePicker = true
+                }
             }
             
             phoneSection
@@ -103,8 +117,21 @@ struct EmployeeFormView: View {
         .onAppear {
             Task {
                 await viewModel.loadFilters()
-                print("Mobile types:", viewModel.mobileTypes)
+//                print("Mobile types:", viewModel.mobileTypes)
             }
+        }
+        .sheet(isPresented: $showDatePicker) {
+            DatePicker(
+                "Joining Date",
+                selection: Binding(
+                    get: { viewModel.joiningDate ?? Date() },
+                    set: { viewModel.joiningDate = $0 }
+                ),
+                in: ...Date.now,
+                displayedComponents: .date
+            )
+            .datePickerStyle(.graphical)
+            .padding()
         }
         .navigationTitle(viewModel.isEdit ? "Edit Employee" : "Add Employee")
         .confirmationDialog("Select Image", isPresented: $showImageSourceDialog) {
