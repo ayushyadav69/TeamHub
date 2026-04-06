@@ -36,7 +36,7 @@ final class EmployeeListViewModel {
     
     // MARK: - Pagination
     
-    private var currentPage = 1
+    private(set) var currentPage = 1
     private let pageSize = 10
     private var hasMore = true
     private(set) var hasLoaded = false

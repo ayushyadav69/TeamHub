@@ -90,6 +90,7 @@ private extension EmployeeRowView {
                     Circle()
                         .fill(Color.secondary.opacity(0.2))
                 }
+                .id(employee.imageURL)
                 .frame(width: 44, height: 44)
                 .clipShape(Circle())
             }

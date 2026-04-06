@@ -62,41 +62,56 @@ struct EmployeeListView: View {
                 .padding()
                 
             } else if !viewModel.employees.isEmpty {
-                
-                List {
-                    
-                    ForEach(viewModel.employees, id: \.id) { employee in
-                        
-                        EmployeeRowView(employee: employee)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                onNavigate(.detail(employee.id))
-                            }
-                            .onAppear {
-                                if viewModel.shouldLoadNext(currentItem: employee) {
-                                    Task {
-                                        await viewModel.loadNextPage()
+                ScrollViewReader { proxy in
+                    List {
+//                        Color.clear
+//                            .frame(height: 0)
+//                            .id("top")
+//                        
+                        ForEach(viewModel.employees) { employee in
+                            
+                            EmployeeRowView(employee: employee)
+                                .id(employee.id)
+                                .contentShape(Rectangle())
+                                .onTapGesture {
+                                    onNavigate(.detail(employee.id))
+                                }
+                                .onAppear {
+                                    if viewModel.shouldLoadNext(currentItem: employee) {
+                                        Task {
+                                            await viewModel.loadNextPage()
+                                        }
                                     }
                                 }
-                            }
-                    }
-                    
-                    // Footer Loader
-                    if viewModel.isLoadingMore {
-                        
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                                .frame(height: 50)
-                            Spacer()
                         }
-                        .id(UUID())
+                        
+                        // Footer Loader
+                        if viewModel.isLoadingMore {
+                            
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                    .frame(height: 50)
+                                Spacer()
+                            }
+                            .id(UUID())
+                        }
                     }
-                }
-                .listStyle(.plain)
-                .animation(.easeInOut, value: viewModel.isLoadingMore)
-                .refreshable {
-                    await viewModel.refresh()
+                    .listStyle(.plain)
+                    .animation(.easeInOut, value: viewModel.isLoadingMore)
+                    .refreshable {
+                        await viewModel.refresh()
+                    }
+                    .onChange(of: viewModel.employees.count) { _ in
+                        
+                        if viewModel.currentPage == 1 {
+                            DispatchQueue.main.async {
+                                if let firstId = viewModel.employees.first?.id {
+                                    proxy.scrollTo(firstId, anchor: .top)
+                                }
+                            }
+                        }
+                    }
                 }
             } else {
                 Text("No employees")

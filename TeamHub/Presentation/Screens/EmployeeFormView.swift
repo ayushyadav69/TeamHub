@@ -132,6 +132,10 @@ struct EmployeeFormView: View {
             )
             .datePickerStyle(.graphical)
             .padding()
+            
+            Button("Done") {
+                showDatePicker = false
+            }
         }
         .navigationTitle(viewModel.isEdit ? "Edit Employee" : "Add Employee")
         .confirmationDialog("Select Image", isPresented: $showImageSourceDialog) {

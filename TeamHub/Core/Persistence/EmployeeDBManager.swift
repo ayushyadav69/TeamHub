@@ -121,6 +121,7 @@ extension EmployeeDBManager {
             dbOffset = 0
         }
         
+//        print("DB offset = ", dbOffset)
         
         let status = SyncStatus.synced.rawValue
         
