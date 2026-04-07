@@ -61,8 +61,14 @@ private struct EmployeeDetailProfileImageView: View {
                         .resizable()
                         .scaledToFill()
                 } placeholder: {
-                    Circle()
-                        .fill(Color.secondary.opacity(0.2))
+                    ZStack {
+                            Circle()
+                                .fill(Color(.secondarySystemBackground))
+
+                        Text(employee.name.initials)
+                            .font(.system(size: 60, weight: .semibold))
+                                .foregroundStyle(.secondary)
+                        }
                 }
                 .id(employee.imageURL)
                 .frame(width: 100, height: 100)

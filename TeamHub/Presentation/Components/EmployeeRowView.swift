@@ -77,7 +77,7 @@ private extension EmployeeRowView {
                 Image(uiImage: uiImage)
                     .resizable()
                     .scaledToFill()
-                    .frame(width: 44, height: 44)
+                    .frame(width: 60, height: 60)
                     .clipShape(Circle())
                 
             } else {
@@ -87,11 +87,18 @@ private extension EmployeeRowView {
                         .resizable()
                         .scaledToFill()
                 } placeholder: {
-                    Circle()
-                        .fill(Color.secondary.opacity(0.2))
+                    ZStack {
+                            Circle()
+                                .fill(Color(.secondarySystemBackground))
+
+                        Text(employee.name.initials)
+                                .font(.title)
+                                .fontWeight(.semibold)
+                                .foregroundStyle(.secondary)
+                        }
                 }
                 .id(employee.imageURL)
-                .frame(width: 44, height: 44)
+                .frame(width: 60, height: 60)
                 .clipShape(Circle())
             }
         }
