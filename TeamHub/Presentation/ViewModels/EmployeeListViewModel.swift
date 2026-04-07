@@ -16,6 +16,7 @@ final class EmployeeListViewModel {
     // MARK: - Dependencies
     
     private let fetchEmployeesUseCase: FetchEmployeesUseCase
+    private let manageEmployeeListFiltersUseCase: ManageEmployeeListFiltersUseCase
     private let deleteEmployeeUseCase: DeleteEmployeeUseCase
     private let fetchFiltersUseCase: FetchFiltersUseCase
     private let clearDBSyncUseCase: ClearDBSyncedUseCase
@@ -43,17 +44,25 @@ final class EmployeeListViewModel {
     
     // MARK: - Query
     
+    var searchText = ""
+    var selectedStatus: Bool? = nil
+    var selectedDesignations: [String] = []
+    var selectedDepartments: [String] = []
+
     private var currentQuery: SearchFilterQuery?
+    private var searchTask: Task<Void, Never>?
     
     // MARK: - Init
     
     init(
         fetchEmployeesUseCase: FetchEmployeesUseCase,
+        manageEmployeeListFiltersUseCase: ManageEmployeeListFiltersUseCase,
         deleteEmployeeUseCase: DeleteEmployeeUseCase,
         fetchFiltersUseCase: FetchFiltersUseCase ,
         clearDBSyncUseCase: ClearDBSyncedUseCase
     ) {
         self.fetchEmployeesUseCase = fetchEmployeesUseCase
+        self.manageEmployeeListFiltersUseCase = manageEmployeeListFiltersUseCase
         self.deleteEmployeeUseCase = deleteEmployeeUseCase
         self.fetchFiltersUseCase = fetchFiltersUseCase
         self.clearDBSyncUseCase = clearDBSyncUseCase
@@ -69,12 +78,23 @@ final class EmployeeListViewModel {
             }
         }
     }
+
+    var activeFilterCount: Int {
+        manageEmployeeListFiltersUseCase.activeFilterCount(for: currentFilters)
+    }
+
+    private var currentFilters: EmployeeListFilters {
+        EmployeeListFilters(
+            searchText: searchText,
+            selectedStatus: selectedStatus,
+            selectedDesignations: selectedDesignations,
+            selectedDepartments: selectedDepartments
+        )
+    }
     
     
     func loadInitial() async {
-        print("entered initial load")
         guard !isLoading else { return }
-        // Prevent reload
         guard !hasLoaded else { return }
         
         hasLoaded = true
@@ -85,36 +105,26 @@ final class EmployeeListViewModel {
         
         currentPage = 1
         hasMore = true
-        print("entering first page load")
+
         do {
-            print("entered first page load")
             let result = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
                 page: EmployeePage(page: currentPage, pageSize: pageSize)
             )
             
             employees = result
-            print("Loaded employees count:", result.count)
-            let pendingCount = max(0, result.count - pageSize)
-
-            // Only synced count matters
-            let syncedCount = result.count - pendingCount
-
-//            hasMore = syncedCount == pageSize
             hasMore = !result.isEmpty
             
         } catch {
             
-            //  Ignore cancelled requests
             if (error as? URLError)?.code == .cancelled {
-                print(" Request cancelled — ignoring")
+                hasLoaded = false
                 return
             }
             
+//            hasLoaded = false
             errorMessage = (error as? APIError)?.message ?? "Something went wrong"
         }
-        
-        //        isLoading = false
     }
     
     func loadNextPage() async {
@@ -138,7 +148,6 @@ final class EmployeeListViewModel {
                 }
                 
                 currentPage = nextPage
-//                hasMore = result.count == pageSize
                 hasMore = !result.isEmpty
             } else {
                 hasMore = false
@@ -168,10 +177,10 @@ final class EmployeeListViewModel {
         Task {
             do {
                 try await clearDBSyncUseCase.execute()
-//                employees = []
             } catch {
                 print("Unable to clear DB")
             }
+            
             hasLoaded = false
             await loadInitial()
         }
@@ -182,6 +191,30 @@ final class EmployeeListViewModel {
         currentQuery = query
         hasLoaded = false
         await loadInitial()
+    }
+
+    func setSearchText(_ value: String) {
+        searchText = value
+
+        searchTask?.cancel()
+        searchTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 900_000_000)
+
+            guard !Task.isCancelled else { return }
+            await self?.applyCurrentFilters()
+        }
+    }
+
+    func applyFilters(
+        status: Bool?,
+        designations: [String],
+        departments: [String]
+    ) async {
+        selectedStatus = status
+        selectedDesignations = designations
+        selectedDepartments = departments
+
+        await applyCurrentFilters()
     }
     
     func deleteEmployee(id: String) async {
@@ -203,6 +236,12 @@ final class EmployeeListViewModel {
         guard let last = employees.last else { return false }
         
         return last.id == currentItem.id
+    }
+
+    private func applyCurrentFilters() async {
+        await applyQuery(
+            manageEmployeeListFiltersUseCase.buildQuery(from: currentFilters)
+        )
     }
     
     

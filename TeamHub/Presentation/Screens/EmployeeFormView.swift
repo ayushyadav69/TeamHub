@@ -25,8 +25,8 @@ struct EmployeeFormView: View {
         _viewModel = State(
             initialValue: EmployeeFormViewModel(
                 employee: employee,
-                createEmployeeUseCase: container.makeAddEmployeeUseCase(),
-                updateEmployeeUseCase: container.makeUpdateEmployeeUseCase(),
+                prepareEmployeeFormUseCase: container.makePrepareEmployeeFormUseCase(),
+                saveEmployeeFormUseCase: container.makeSaveEmployeeFormUseCase(),
                 fetchFiltersUseCase: container.makeFetchFiltersUseCase()
             )
         )
@@ -39,7 +39,13 @@ struct EmployeeFormView: View {
         Form {
             
             Section {
-                imagePickerView
+                EmployeeFormImageSectionView(
+                    selectedImageData: viewModel.selectedImageData,
+                    selectedImageURL: viewModel.selectedImageURL,
+                    onChangePhoto: {
+                        showImageSourceDialog = true
+                    }
+                )
             }
             
             Section("Basic Info") {
@@ -112,13 +118,17 @@ struct EmployeeFormView: View {
                 }
             }
             
-            phoneSection
+            EmployeeFormPhoneSectionView(
+                mobiles: $viewModel.mobiles,
+                mobileTypes: viewModel.mobileTypes,
+                canAddPhone: viewModel.canAddPhone,
+                isTypeUsed: viewModel.isTypeUsed,
+                onDelete: viewModel.removePhone,
+                onAddPhone: viewModel.addPhone
+            )
         }
-        .onAppear {
-            Task {
-                await viewModel.loadFilters()
-//                print("Mobile types:", viewModel.mobileTypes)
-            }
+        .task {
+            await viewModel.loadFilters()
         }
         .sheet(isPresented: $showDatePicker) {
             DatePicker(
@@ -170,96 +180,19 @@ struct EmployeeFormView: View {
             }
         }
         .toolbar {
-            saveButton
-        }
-    }
-    
-    var phoneSection: some View {
-        
-        Section("Phone Numbers") {
-            
-            ForEach($viewModel.mobiles) { $mobile in
+            ToolbarItem(placement: .navigationBarTrailing) {
                 
-                PhoneRowView(
-                    mobile: $mobile,
-                    mobileTypes: viewModel.mobileTypes,
-                    isTypeUsed: viewModel.isTypeUsed,
-                    onDelete: {
-                        viewModel.removePhone(id: mobile.id!)
+                Button("Save") {
+                    Task {
+                        let success = await viewModel.submit()
+                        
+                        if success {
+                            onDismiss()
+                        }
                     }
-                )
-            }
-            
-            Button("Add Phone") {
-                viewModel.addPhone()
-            }
-        }
-    }
-    
-    var saveButton: some ToolbarContent {
-        
-        ToolbarItem(placement: .navigationBarTrailing) {
-            
-            Button("Save") {
-                submit()
-            }
-            .disabled(!viewModel.isFormValid || viewModel.isLoading)
-        }
-    }
-    
-    private func submit() {
-        
-        Task {
-            let success = await viewModel.submit()
-            
-            if success {
-                onDismiss()
-            }
-        }
-    }
-    
-    private var imagePickerView: some View {
-        
-        VStack {
-            
-            if let data = viewModel.selectedImageData,
-               let uiImage = UIImage(data: data) {
-                
-                Image(uiImage: uiImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: 100, height: 100)
-                    .clipShape(Circle())
-
-            } else if let urlString = viewModel.selectedImageURL,
-                      let url = URL(string: urlString) {
-                
-                CachedAsyncImage(url: url) { image in
-                    image
-                        .resizable()
-                        .scaledToFill()
-                } placeholder: {
-                    ProgressView()
                 }
-                .frame(width: 100, height: 100)
-                .clipShape(Circle())
-
-            } else {
-                
-                Circle()
-                    .fill(.secondary.opacity(0.2))
-                    .frame(width: 100, height: 100)
-                    .overlay(
-                        Image(systemName: "camera")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                    )
-            }
-            
-            Button("Change Photo") {
-                showImageSourceDialog = true
+                .disabled(!viewModel.isFormValid || viewModel.isLoading)
             }
         }
-        .frame(maxWidth: .infinity)
     }
 }

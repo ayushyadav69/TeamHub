@@ -50,9 +50,8 @@ final class EmployeeDetailViewModel {
             }
         }
     }
-    
+
     func load(id: String) async {
-        print("Loading detail for id:", id)
         guard !hasLoaded else { return }
         hasLoaded = true
         
@@ -61,10 +60,9 @@ final class EmployeeDetailViewModel {
         
         do {
             let result = try await fetchEmployeeDetailUseCase.execute(id: id)
-            print("Fetched employee:", result)
             employee = result
-            print("Employee set:", employee != nil)
         } catch {
+            hasLoaded = false
             errorMessage = (error as? APIError)?.message ?? "Failed to load"
         }
         

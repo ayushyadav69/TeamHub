@@ -39,8 +39,10 @@ struct PhoneRowView: View {
     }
     
     private var filteredTypes: [MobileType] {
-        mobileTypes.filter {
-            $0 == mobile.type || !isTypeUsed($0, mobile.id!)
+        let mobileId = mobile.id ?? ""
+
+        return mobileTypes.filter {
+            $0 == mobile.type || !isTypeUsed($0, mobileId)
         }
     }
 }

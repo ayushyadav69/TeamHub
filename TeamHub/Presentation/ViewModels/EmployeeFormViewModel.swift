@@ -14,8 +14,8 @@ final class EmployeeFormViewModel {
     
     // MARK: - Dependencies
     
-    private let createEmployeeUseCase: AddEmployeeUseCase
-    private let updateEmployeeUseCase: UpdateEmployeeUseCase
+    private let prepareEmployeeFormUseCase: PrepareEmployeeFormUseCase
+    private let saveEmployeeFormUseCase: SaveEmployeeFormUseCase
     private let fetchFiltersUseCase: FetchFiltersUseCase
     
     // MARK: - Mode
@@ -50,86 +50,90 @@ final class EmployeeFormViewModel {
     
     init(
         employee: EmployeeDetail?,
-        createEmployeeUseCase: AddEmployeeUseCase,
-        updateEmployeeUseCase: UpdateEmployeeUseCase,
+        prepareEmployeeFormUseCase: PrepareEmployeeFormUseCase,
+        saveEmployeeFormUseCase: SaveEmployeeFormUseCase,
         fetchFiltersUseCase: FetchFiltersUseCase
     ) {
         self.existingEmployee = employee
         self.isEdit = employee != nil
-        self.createEmployeeUseCase = createEmployeeUseCase
-        self.updateEmployeeUseCase = updateEmployeeUseCase
+        self.prepareEmployeeFormUseCase = prepareEmployeeFormUseCase
+        self.saveEmployeeFormUseCase = saveEmployeeFormUseCase
         self.fetchFiltersUseCase = fetchFiltersUseCase
-        
-        if let employee {
-            populate(employee)
-        }
-    }
-    
-    private func populate(_ employee: EmployeeDetail) {
-        
-        selectedImageURL = employee.imageURL
-        name = employee.name
-        email = employee.email
-        designation = employee.designation
-        department = employee.department
-        city = employee.city
-        country = employee.country
-        isActive = employee.isActive
-        mobiles = employee.mobiles
-        joiningDate = employee.joiningDate 
+
+        let input = prepareEmployeeFormUseCase.makeInput(from: employee)
+
+        selectedImageURL = input.selectedImageURL
+        name = input.name
+        email = input.email
+        designation = input.designation
+        department = input.department
+        city = input.city
+        country = input.country
+        isActive = input.isActive
+        mobiles = input.mobiles
+        joiningDate = input.joiningDate
     }
     
     var nameError: String? {
-        name.trimmingCharacters(in: .whitespaces).isEmpty ? "Name is required" : nil
+        prepareEmployeeFormUseCase.nameError(for: name)
     }
 
     var emailError: String? {
-        email.contains("@") ? nil : "Enter valid email"
+        prepareEmployeeFormUseCase.emailError(for: email)
     }
 
     var isFormValid: Bool {
-        nameError == nil &&
-        emailError == nil &&
-        !designation.isEmpty &&
-        !department.isEmpty
+        prepareEmployeeFormUseCase.isFormValid(formInput)
+    }
+
+    var canAddPhone: Bool {
+        prepareEmployeeFormUseCase.canAddPhone(to: mobiles)
+    }
+
+    private var formInput: EmployeeFormInput {
+        EmployeeFormInput(
+            selectedImageURL: selectedImageURL,
+            name: name,
+            email: email,
+            designation: designation,
+            department: department,
+            city: city,
+            country: country,
+            isActive: isActive,
+            joiningDate: joiningDate,
+            mobiles: mobiles
+        )
     }
     
     func addPhone() {
-        guard mobiles.count < 3 else { return }
-        
-        let availableType = mobileTypes.first { type in
-            !mobiles.contains { $0.type == type }
-        } ?? mobileTypes.first ?? .home
-        
-        mobiles.append(
-            Mobile(
-                id: UUID().uuidString,
-                type: availableType,
-                number: ""
-            )
+        mobiles = prepareEmployeeFormUseCase.addPhone(
+            to: mobiles,
+            availableTypes: mobileTypes
         )
     }
 
     func removePhone(id: String) {
-        mobiles.removeAll { $0.id == id }
+        mobiles = prepareEmployeeFormUseCase.removePhone(
+            id: id,
+            from: mobiles
+        )
     }
     
     func loadFilters() async {
         do {
             let filters = try await fetchFiltersUseCase.forForm()
-            
-            mobileTypes = filters.mobileTypes
-            designations = filters.designations
-            departments = filters.departments
-            
-            // FIX HERE
-            if !designations.contains(designation) {
-                designation = designations.first ?? ""
-            }
 
-            if !departments.contains(department) {
-                department = departments.first ?? ""
-            }
+            let normalizedFilters = prepareEmployeeFormUseCase.normalizeFilters(
+                filters,
+                currentDesignation: designation,
+                currentDepartment: department
+            )
+
+            mobileTypes = normalizedFilters.mobileTypes
+            designations = normalizedFilters.designations
+            departments = normalizedFilters.departments
+            designation = normalizedFilters.selectedDesignation
+            department = normalizedFilters.selectedDepartment
             
         } catch {
             print("Failed to load filters:", error)
@@ -137,9 +141,11 @@ final class EmployeeFormViewModel {
     }
     
     func isTypeUsed(_ type: MobileType, excluding id: String) -> Bool {
-        mobiles.contains {
-            $0.type == type && $0.id != id
-        }
+        prepareEmployeeFormUseCase.isTypeUsed(
+            type,
+            in: mobiles,
+            excluding: id
+        )
     }
     
     func submit() async -> Bool {
@@ -154,31 +160,16 @@ final class EmployeeFormViewModel {
         errorMessage = nil
         
         do {
-            
-            let employee = EmployeeDetail(
-                id: existingEmployee?.id ?? UUID().uuidString,
-                name: name,
-                email: email,
-                designation: designation,
-                department: department,
-                city: city,
-                country: country,
-                isActive: isActive,
-                imageURL: selectedImageURL,
-                joiningDate: joiningDate,
-                createdAt: existingEmployee?.createdAt,
-                updatedAt: Date.now,
-                deletedAt: existingEmployee?.deletedAt,
-                mobiles: mobiles
+            let employeeForm = prepareEmployeeFormUseCase.makeFormData(
+                from: formInput,
+                existingEmployee: existingEmployee,
+                imageData: selectedImageData
             )
-            
-            let form = EmployeeFormData(employee: employee, imageData: selectedImageData)
-            
-            if isEdit {
-                try await updateEmployeeUseCase.execute(form)
-            } else {
-                try await createEmployeeUseCase.execute(form)
-            }
+
+            try await saveEmployeeFormUseCase.execute(
+                employeeForm,
+                isEdit: isEdit
+            )
             
             return true
             
@@ -186,7 +177,5 @@ final class EmployeeFormViewModel {
             errorMessage = (error as? APIError)?.message ?? "Failed to save"
             return false
         }
-        
-//        isLoading = false
     }
 }

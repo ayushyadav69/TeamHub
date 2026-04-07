@@ -102,6 +102,20 @@ final class AppContainer {
 }
 
 extension AppContainer {
+    func makeManageEmployeeListFiltersUseCase() -> ManageEmployeeListFiltersUseCase {
+        DefaultManageEmployeeListFiltersUseCase()
+    }
+
+    func makePrepareEmployeeFormUseCase() -> PrepareEmployeeFormUseCase {
+        DefaultPrepareEmployeeFormUseCase()
+    }
+
+    func makeSaveEmployeeFormUseCase() -> SaveEmployeeFormUseCase {
+        DefaultSaveEmployeeFormUseCase(
+            addEmployeeUseCase: makeAddEmployeeUseCase(),
+            updateEmployeeUseCase: makeUpdateEmployeeUseCase()
+        )
+    }
     
     // MARK: - Fetch Employees
     

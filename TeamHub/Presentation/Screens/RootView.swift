@@ -19,7 +19,9 @@ struct RootView: View {
             
             EmployeeListView(
                 container: container,
-                onNavigate: handleRoute
+                onNavigate: { route in
+                    path.append(route)
+                }
             )
             .navigationDestination(for: Route.self) { route in
                 
@@ -29,7 +31,9 @@ struct RootView: View {
                     EmployeeDetailView(
                         container: container,
                         id: id,
-                        onNavigate: handleRoute,
+                        onNavigate: { nextRoute in
+                            path.append(nextRoute)
+                        },
                         onDismiss: {
                             path.removeLast()
                         }
@@ -37,10 +41,10 @@ struct RootView: View {
                     
                 case .add:
                     EmployeeFormView(
-                            container: container,
-                            employee: nil,
-                            onDismiss: { path.removeLast() }
-                        )
+                        container: container,
+                        employee: nil,
+                        onDismiss: { path.removeLast() }
+                    )
                     
                 case .edit(let employee):
                     EmployeeFormView(
@@ -56,31 +60,3 @@ struct RootView: View {
         }
     }
 }
-
-private extension RootView {
-    
-    func handleRoute(_ route: Route) {
-        print("Navigating to:", route)
-        path.append(route)
-    }
-    
-//    @ViewBuilder
-//    func destination(for route: Route) -> some View {
-//        
-//        switch route {
-//            
-//        case .detail(let id):
-//            EmployeeDetailView(container: container, id: id)
-//            
-//        case .add:
-//            Text("Add Employee")
-//            
-//        case .edit(let employee):
-//            Text("Edit \(employee.name)")
-//        }
-//    }
-}
-
-//#Preview {
-//    RootView()
-//}

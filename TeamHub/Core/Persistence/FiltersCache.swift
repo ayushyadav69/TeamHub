@@ -16,7 +16,7 @@ final class FiltersCache {
             let data = try JSONEncoder().encode(filters)
             UserDefaults.standard.set(data, forKey: key)
         } catch {
-            print("❌ Failed to cache filters:", error)
+            print("Failed to cache filters:", error)
         }
     }
     
@@ -28,7 +28,7 @@ final class FiltersCache {
         do {
             return try JSONDecoder().decode(Filters.self, from: data)
         } catch {
-            print("❌ Failed to decode cached filters:", error)
+            print("Failed to decode cached filters:", error)
             return nil
         }
     }
