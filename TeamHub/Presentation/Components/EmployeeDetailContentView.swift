@@ -29,13 +29,19 @@ private struct EmployeeDetailHeaderView: View {
         VStack(spacing: 12) {
             EmployeeDetailProfileImageView(employee: employee)
 
-            Text(employee.name)
+            Text(employee.name.capitalized)
                 .font(.title2)
                 .fontWeight(.semibold)
 
-            Text(employee.email)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+            HStack {
+                Image(systemName: "envelope")
+                    .foregroundStyle(.secondary.opacity(0.8))
+                    .frame(width: 20)
+                
+                Text(employee.email.lowercased())
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -82,30 +88,36 @@ private struct EmployeeDetailInfoSectionView: View {
     let employee: EmployeeDetail
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            EmployeeDetailInfoRow(title: "Designation", value: employee.designation)
-            EmployeeDetailInfoRow(title: "Department", value: employee.department)
+        VStack(alignment: .leading, spacing: 20) {
+            EmployeeDetailInfoRow(title: "Designation", value: employee.designation, systemImage: "briefcase")
+            EmployeeDetailInfoRow(title: "Department", value: employee.department, systemImage: "building.2")
             EmployeeDetailInfoRow(
                 title: "Location",
-                value: "\(employee.city), \(employee.country)"
+                value: "\(employee.city), \(employee.country)",
+                systemImage: "location"
             )
 
             if let date = employee.joiningDate {
                 EmployeeDetailInfoRow(
                     title: "Joining Date",
-                    value: date.formatted(date: .numeric, time: .omitted)
+                    value: date.formatted(date: .numeric, time: .omitted),
+                    systemImage: "calendar"
                 )
             }
 
-            HStack {
+            HStack(alignment: .firstTextBaseline, spacing: 12) {
+                Image(systemName: employee.isActive ? "person.fill.checkmark" : "person.fill.xmark")
+                    .foregroundStyle(.secondary.opacity(0.8))
+                    .frame(width: 20)
+                
                 Text("Status")
-                    .font(.caption)
                     .foregroundStyle(.secondary)
 
                 Spacer()
 
                 Text(employee.isActive ? "Active" : "Inactive")
-                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
                     .background(
@@ -116,6 +128,11 @@ private struct EmployeeDetailInfoSectionView: View {
                     .clipShape(Capsule())
             }
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+        )
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -123,15 +140,22 @@ private struct EmployeeDetailInfoSectionView: View {
 private struct EmployeeDetailInfoRow: View {
     let title: String
     let value: String
+    let systemImage: String
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            Image(systemName: systemImage)
+                .foregroundStyle(.secondary.opacity(0.8))
+                .frame(width: 20)
+
             Text(title)
-                .font(.caption)
                 .foregroundStyle(.secondary)
 
+            Spacer()
+
             Text(value)
-                .font(.body)
+                .fontWeight(.medium)
+                .foregroundStyle(.primary)
         }
     }
 }
