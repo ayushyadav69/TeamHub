@@ -295,11 +295,10 @@ extension EmployeeDBManager {
         }
         
         let descriptor = FetchDescriptor<EmployeeEntity>(
-            predicate: predicate
-//            sortBy: [
-//                SortDescriptor(\.name),
-//                SortDescriptor(\.id)
-//            ]
+            predicate: predicate,
+            sortBy: [
+                SortDescriptor(\EmployeeEntity.createdAt, order: .reverse)
+            ]
         )
         
         return try context.fetch(descriptor)
@@ -323,7 +322,31 @@ extension EmployeeDBManager {
 //                print(dto)
             } else {
                 
-                try insert(dto, syncStatus: .synced)
+                let status = SyncStatus.synced.rawValue
+                
+                let predicate = #Predicate<EmployeeEntity> { entity in
+                    
+                    entity.syncStatus == status
+                    &&
+                    entity.deletedAt == nil
+                }
+                
+                var descriptor = FetchDescriptor<EmployeeEntity>(
+                    predicate: predicate,
+                    sortBy: [
+                        SortDescriptor(\EmployeeEntity.createdAt, order: .reverse)
+                    ]
+                )
+                descriptor.fetchLimit = 1
+                descriptor.fetchOffset = 0
+                
+                let result = try context.fetch(descriptor)
+                
+                if let latrestCreatedAt = result.first?.createdAt, let dtoCreatedAt = dto.createdAt {
+                    if latrestCreatedAt < dtoCreatedAt {
+                        try insert(dto, syncStatus: .synced)
+                    }
+                }
             }
         }
         
