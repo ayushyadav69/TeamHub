@@ -15,19 +15,23 @@ struct EmployeeDetailView: View {
     @State private var showDeleteAlert = false
     let onNavigate: (Route) -> Void
     let onDismiss: () -> Void
+    let onDeletedDismiss: () -> Void
     
     init(
         container: AppContainer,
         id: String,
         onNavigate: @escaping (Route) -> Void,
-        onDismiss: @escaping () -> Void
+        onDismiss: @escaping () -> Void,
+        onDeletedDismiss: @escaping () -> Void
     ) {
         self.id = id
         self.onNavigate = onNavigate
         self.onDismiss = onDismiss
+        self.onDeletedDismiss = onDeletedDismiss
         
         _viewModel = State(
             initialValue: EmployeeDetailViewModel(
+                employeeId: id,
                 fetchEmployeeDetailUseCase: container.makeFetchEmployeeDetailUseCase(),
                 deleteEmployeeUseCase: container.makeDeleteEmployeeUseCase()
             )
@@ -36,7 +40,7 @@ struct EmployeeDetailView: View {
     
     var body: some View {
         Group {
-            if viewModel.isLoading && viewModel.initialLoad {
+            if viewModel.isLoading && viewModel.initialLoad && viewModel.employee == nil {
                 VStack {
                     Spacer()
                     ProgressView()
@@ -44,20 +48,6 @@ struct EmployeeDetailView: View {
                     Spacer()
                 }
                 .id(UUID())
-                
-            } else if let error = viewModel.errorMessage {
-                VStack(spacing: 12) {
-                    
-                    Text(error)
-                        .multilineTextAlignment(.center)
-                    
-                    Button("Retry") {
-                        Task {
-                            await viewModel.retry(id: id)
-                        }
-                    }
-                }
-                .padding()
                 
             } else if let employee = viewModel.employee {
                 EmployeeDetailContentView(employee: employee)
@@ -73,6 +63,24 @@ struct EmployeeDetailView: View {
         }
         .task(id: id) {
             await viewModel.load(id: id)
+        }
+        .onChange(of: viewModel.shouldDismiss) { _, shouldDismiss in
+            if shouldDismiss {
+                onDeletedDismiss()
+            }
+        }
+        .alert("Error", isPresented: errorAlertIsPresented) {
+            if viewModel.canRetryError {
+                Button("Retry") {
+                    viewModel.retryLastError()
+                }
+            }
+            
+            Button("OK", role: .cancel) {
+                viewModel.dismissError()
+            }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
         .toolbar {
             
@@ -95,7 +103,7 @@ struct EmployeeDetailView: View {
                 }
             }
         }
-        .alert("Delete Employee?", isPresented: $showDeleteAlert) {
+        .confirmationDialog("Delete Employee?", isPresented: $showDeleteAlert) {
             
             Button("Delete", role: .destructive) {
                 Task {
@@ -110,5 +118,16 @@ struct EmployeeDetailView: View {
         } message: {
             Text("This action cannot be undone.")
         }
+    }
+    
+    private var errorAlertIsPresented: Binding<Bool> {
+        Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    viewModel.dismissError()
+                }
+            }
+        )
     }
 }

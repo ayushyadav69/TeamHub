@@ -37,10 +37,11 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
         try dbManager.delete(id: id)
     }
     
-    func fetchDetail(id: String) async throws -> EmployeeDetail {
+    func fetchDetail(id: String) async throws -> EmployeeDetail? {
         
-        guard let entity = try dbManager.fetchDetail(id: id) else {
-            throw NSError(domain: "Employee not found", code: 404)
+        guard let entity = try dbManager.fetchDetail(id: id)
+        else {
+            return nil
         }
         
         return entity.toEmployeeDetail()
@@ -83,6 +84,10 @@ final class DefaultEmployeeLocalDataSource: EmployeeLocalDataSource {
     
     func deleteAllSynced() async throws {
         try dbManager.deleteAllSynced()
+    }
+    
+    func deleteAll() async throws {
+        try dbManager.deleteAll()
     }
     
     func updateImage(id: String, url: String) throws {

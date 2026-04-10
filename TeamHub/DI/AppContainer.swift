@@ -177,6 +177,13 @@ extension AppContainer {
         DefaultClearDBSyncedUseCase(repository: employeeRepository, networkMonitor: networkMonitor)
     }
     
+    func makeRefreshServerDataUseCase() -> RefreshServerDataUseCase {
+        DefaultRefreshServerDataUseCase(
+            repository: employeeRepository,
+            networkMonitor: networkMonitor
+        )
+    }
+    
     func setupNetworkSync() {
         
         networkMonitor.onReconnect = { [weak self] in

@@ -41,21 +41,17 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     func fetchAll(
         query: SearchFilterQuery?,
         page: EmployeePage
-    ) async throws -> [Employee] {
+    ) async throws -> (_:[Employee],pageFetched: Int) {
         
+        var pagesFetched = 1
         // QUERY FLOW
 //        print("Api offset = ", page.offset)
         if let query {
             
             // ONLINE → API ONLY (no caching)
             if networkMonitor.isConnected {
-                
-                let response = try await remote.fetchEmployees(
-                    query: query,
-                    page: page
-                )
-                let result = response.data.filter{ $0.deletedAt == "" }
-                return result.map { $0.toEmployee() }
+                let result = try await fetchQueryListFromAPI(query: query, page: page, pagesFetched: pagesFetched)
+                return result
             }
             
             // OFFLINE → DB
@@ -66,12 +62,13 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             )
             
             // prepend pending only on first page
-            if page.page == 0 {
+            if page.page == 1 {
                 let pending = try await local.fetchPending(query: query)
-                return pending + synced
+                let result = pending + synced
+                return (result,pageFetched: 1)
             }
             
-            return synced
+            return (synced,pageFetched: 1)
         }
         
         // NORMAL FLOW
@@ -82,19 +79,41 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         )
         
         if synced.isEmpty, networkMonitor.isConnected {
-            synced = try await fetchNormalListFromAPI(page: page)
+            (synced,pagesFetched) = try await fetchNormalListFromAPI(page: page,pagesFetched: pagesFetched)
+            
         }
         
         // Prepend pending only on first page
         if page.page == 1 {
             let pending = try await local.fetchPending(query: nil)
-            return pending + synced
+            let result = pending + synced
+            return (result,pageFetched: pagesFetched)
         }
         
-        return synced
+        return (synced,pageFetched: pagesFetched)
     }
     
-    private func fetchNormalListFromAPI(page: EmployeePage) async throws -> [Employee] {
+    private func fetchQueryListFromAPI(query: SearchFilterQuery, page: EmployeePage,pagesFetched: Int) async throws -> (_:[Employee],pageFetched: Int) {
+        
+        
+        let response = try await remote.fetchEmployees(
+            query: query,
+            page: page
+        )
+        if response.data.isEmpty {
+            return ([],pageFetched:pagesFetched)
+        }
+        let result = response.data.filter{ $0.deletedAt == "" }
+        if result.isEmpty {
+            let nextPage = EmployeePage(page: page.page + 1, pageSize: page.pageSize)
+            return try await fetchQueryListFromAPI(query: query, page: nextPage,pagesFetched: pagesFetched + 1)
+        }
+        
+        return (result.map { $0.toEmployee() },pageFetched: pagesFetched)
+        
+    }
+    
+    private func fetchNormalListFromAPI(page: EmployeePage,pagesFetched: Int) async throws -> (employees:[Employee],pageFetched: Int) {
         
         
         
@@ -109,7 +128,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         }
         
         if response.data.isEmpty {
-            return []
+            return ([],pageFetched:pagesFetched)
         }
         
         let employees = response.data.map {
@@ -129,10 +148,10 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         
         if synced.isEmpty {
             let nextPage = EmployeePage(page: page.page + 1, pageSize: page.pageSize)
-            return try await fetchNormalListFromAPI(page: nextPage)
+            return try await fetchNormalListFromAPI(page: nextPage,pagesFetched: pagesFetched + 1)
         }
         
-        return synced
+        return (synced, pageFetched: pagesFetched)
     }
     
     func addEmployee(_ form: EmployeeFormData) async throws {
@@ -210,19 +229,24 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             try await local.insertDeletedPlaceholder(id: id)
 //            try await local.delete(id: id)
         }
+        DataChangeNotifier.shared.notifyEmployeeDeleted(id: id)
         DataChangeNotifier.shared.notify()
     }
     
     func fetchDetail(id: String) async throws -> EmployeeDetail {
         
-//        if networkMonitor.isConnected {
-//            
-//            let response = try await remote.fetchEmployeeDetail(id: id)
-//            
-//            return response.data.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
-//        }
+        let employee = try await local.fetchDetail(id: id)
+        guard let employee else {
+            if networkMonitor.isConnected {
+                
+                let response = try await remote.fetchEmployeeDetail(id: id)
+                
+                return response.data.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
+            }
+            throw APIError.custom("Employee does not exist.")
+        }
         
-        return try await local.fetchDetail(id: id)
+        return employee
     }
     
     func fetchFilters() async throws -> Filters {
@@ -252,6 +276,11 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     
     func clearDBSynced() async throws {
         try await local.deleteAllSynced()
+    }
+    
+    func clearLocalData() async throws {
+        try await local.deleteAll()
+        cursorStore.clear()
     }
     
     func uploadPendingImages() async {

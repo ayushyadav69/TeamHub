@@ -11,6 +11,7 @@ struct EmployeeFormView: View {
     
     @State private var viewModel: EmployeeFormViewModel
     let onDismiss: () -> Void
+    let onDeletedDismiss: () -> Void
     
     @State private var showImageSourceDialog = false
     @State private var showImagePicker = false
@@ -20,7 +21,8 @@ struct EmployeeFormView: View {
     init(
         container: AppContainer,
         employee: EmployeeDetail?,
-        onDismiss: @escaping () -> Void
+        onDismiss: @escaping () -> Void,
+        onDeletedDismiss: @escaping () -> Void
     ) {
         _viewModel = State(
             initialValue: EmployeeFormViewModel(
@@ -32,6 +34,7 @@ struct EmployeeFormView: View {
         )
         
         self.onDismiss = onDismiss
+        self.onDeletedDismiss = onDeletedDismiss
     }
     
     var body: some View {
@@ -62,6 +65,8 @@ struct EmployeeFormView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     
                     TextField("Email", text: $viewModel.email)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
                     
                     if let error = viewModel.emailError {
                         Text(error)
@@ -88,8 +93,25 @@ struct EmployeeFormView: View {
             }
             
             Section("Location") {
-                TextField("City", text: $viewModel.city)
-                TextField("Country", text: $viewModel.country)
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("City", text: $viewModel.city)
+                    
+                    if let error = viewModel.cityError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    TextField("Country", text: $viewModel.country)
+                    
+                    if let error = viewModel.countryError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
             }
             
             Section("Status") {
@@ -97,24 +119,32 @@ struct EmployeeFormView: View {
             }
             
             Section {
-                HStack {
-                    Text("Joining Date")
-                    
-                    Spacer()
-                    
-                    Text(
-                        viewModel.joiningDate?
-                            .formatted(date: .abbreviated, time: .omitted)
-                        ?? "---"
-                    )
-                    .foregroundColor(viewModel.joiningDate == nil ? .gray : .primary)
-                }
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    if viewModel.joiningDate == nil {
-                        viewModel.joiningDate = Date()
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text("Joining Date")
+                        
+                        Spacer()
+                        
+                        Text(
+                            viewModel.joiningDate?
+                                .formatted(date: .abbreviated, time: .omitted)
+                            ?? "---"
+                        )
+                        .foregroundColor(viewModel.joiningDate == nil ? .gray : .primary)
                     }
-                    showDatePicker = true
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        if viewModel.joiningDate == nil {
+                            viewModel.joiningDate = Date()
+                        }
+                        showDatePicker = true
+                    }
+                    
+                    if let error = viewModel.joiningDateError {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
                 }
             }
             
@@ -123,12 +153,18 @@ struct EmployeeFormView: View {
                 mobileTypes: viewModel.mobileTypes,
                 canAddPhone: viewModel.canAddPhone,
                 isTypeUsed: viewModel.isTypeUsed,
+                numberError: { viewModel.mobileNumberError(for: $0) },
                 onDelete: viewModel.removePhone,
                 onAddPhone: viewModel.addPhone
             )
         }
         .task {
             await viewModel.loadFilters()
+        }
+        .onChange(of: viewModel.shouldDismiss) { _, shouldDismiss in
+            if shouldDismiss {
+                onDeletedDismiss()
+            }
         }
         .sheet(isPresented: $showDatePicker) {
             DatePicker(
@@ -165,9 +201,15 @@ struct EmployeeFormView: View {
                 showImagePicker = true
             }
         }
-        .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
-            Button("OK") {
-                viewModel.errorMessage = nil
+        .alert("Error", isPresented: errorAlertIsPresented) {
+            if viewModel.canRetryError {
+                Button("Retry") {
+                    viewModel.retryLastError()
+                }
+            }
+            
+            Button("OK", role: .cancel) {
+                viewModel.dismissError()
             }
         } message: {
             Text(viewModel.errorMessage ?? "")
@@ -191,8 +233,19 @@ struct EmployeeFormView: View {
                         }
                     }
                 }
-                .disabled(!viewModel.isFormValid || viewModel.isLoading)
+                .disabled(!viewModel.canSave)
             }
         }
+    }
+    
+    private var errorAlertIsPresented: Binding<Bool> {
+        Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    viewModel.dismissError()
+                }
+            }
+        )
     }
 }

@@ -12,7 +12,7 @@ protocol FetchEmployeesUseCase {
     func execute(
         query: SearchFilterQuery?,
         page: EmployeePage
-    ) async throws -> [Employee]
+    ) async throws -> (_:[Employee],pageFetched: Int)
 }
 
 final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
@@ -34,7 +34,7 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
     func execute(
         query: SearchFilterQuery?,
         page: EmployeePage
-    ) async throws -> [Employee] {
+    ) async throws -> (_:[Employee],pageFetched: Int) {
         
         // Trigger sync ONLY for normal list
 //        if query == nil && networkMonitor.isConnected {

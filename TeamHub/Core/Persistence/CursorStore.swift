@@ -20,4 +20,8 @@ final class CursorStore {
         ? nil
         : UserDefaults.standard.integer(forKey: key)
     }
+    
+    func clear() {
+        UserDefaults.standard.removeObject(forKey: key)
+    }
 }

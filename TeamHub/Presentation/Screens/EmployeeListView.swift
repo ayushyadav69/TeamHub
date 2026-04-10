@@ -34,28 +34,15 @@ struct EmployeeListView: View {
         
         Group {
             
-            if viewModel.isLoading || !viewModel.hasLoaded {
+            if (viewModel.isLoading || !viewModel.hasLoaded)
+//                && viewModel.employees.isEmpty
+            {
                 
                 VStack {
                     Spacer()
                     ProgressView()
                     Spacer()
                 }
-                
-            } else if let error = viewModel.errorMessage {
-                
-                VStack(spacing: 12) {
-                    
-                    Text(error)
-                        .multilineTextAlignment(.center)
-                    
-                    Button("Retry") {
-                        Task {
-                            await viewModel.loadInitial()
-                        }
-                    }
-                }
-                .padding()
                 
             } else {
                 ZStack {
@@ -97,7 +84,7 @@ struct EmployeeListView: View {
                             .refreshable {
                                 await viewModel.refresh()
                             }
-                            .onChange(of: viewModel.employees.count) { _ in
+                            .onChange(of: viewModel.employees.count) { _, _ in
                                 
                                 if viewModel.currentPage == 1 {
                                     DispatchQueue.main.async {
@@ -126,6 +113,19 @@ struct EmployeeListView: View {
         .task {
             await viewModel.loadInitial()
             await viewModel.loadFilters()
+        }
+        .alert("Error", isPresented: errorAlertIsPresented) {
+            if viewModel.canRetryError {
+                Button("Retry") {
+                    viewModel.retryLastError()
+                }
+            }
+            
+            Button("OK", role: .cancel) {
+                viewModel.dismissError()
+            }
+        } message: {
+            Text(viewModel.errorMessage ?? "")
         }
         
         .toolbar {
@@ -177,5 +177,16 @@ struct EmployeeListView: View {
                 }
             }
         }
+    }
+    
+    private var errorAlertIsPresented: Binding<Bool> {
+        Binding(
+            get: { viewModel.errorMessage != nil },
+            set: { isPresented in
+                if !isPresented {
+                    viewModel.dismissError()
+                }
+            }
+        )
     }
 }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct EmployeeFormInput {
+struct EmployeeFormInput: Equatable {
     var selectedImageURL: String?
     var name: String
     var email: String

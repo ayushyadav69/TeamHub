@@ -32,13 +32,16 @@ final class EmployeeListViewModel {
     var isLoadingMore = false
     var errorMessage: String?
     
+    @ObservationIgnored
+    private var retryAction: (@MainActor () async -> Void)?
+    
     private var observerId: UUID?
     private var reloadTask: Task<Void, Never>?
     
     // MARK: - Pagination
     
     private(set) var currentPage = 1
-    private let pageSize = 10
+    private let pageSize = 20
     private var hasMore = true
     private(set) var hasLoaded = false
     
@@ -107,14 +110,14 @@ final class EmployeeListViewModel {
         hasMore = true
 
         do {
-            let result = try await fetchEmployeesUseCase.execute(
+            let (result,pageFetched) = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
                 page: EmployeePage(page: currentPage, pageSize: pageSize)
             )
             
             employees = result
             hasMore = !result.isEmpty
-            
+            currentPage += pageFetched
         } catch {
             
             if (error as? URLError)?.code == .cancelled {
@@ -122,8 +125,14 @@ final class EmployeeListViewModel {
                 return
             }
             
-//            hasLoaded = false
-            errorMessage = (error as? APIError)?.message ?? "Something went wrong"
+            presentError(
+                error,
+                fallback: "Something went wrong",
+                retryAction: { [weak self] in
+                    self?.hasLoaded = false
+                    await self?.loadInitial()
+                }
+            )
         }
     }
     
@@ -134,11 +143,11 @@ final class EmployeeListViewModel {
         isLoadingMore = true
         
         do {
-            let nextPage = currentPage + 1
+//            let nextPage = currentPage
             
-            let result = try await fetchEmployeesUseCase.execute(
+            let (result,pageFetched) = try await fetchEmployeesUseCase.execute(
                 query: currentQuery,
-                page: EmployeePage(page: nextPage, pageSize: pageSize)
+                page: EmployeePage(page: currentPage, pageSize: pageSize)
             )
             
             if !result.isEmpty {
@@ -147,14 +156,20 @@ final class EmployeeListViewModel {
                     employees.append(contentsOf: result)
                 }
                 
-                currentPage = nextPage
+                currentPage += pageFetched
                 hasMore = !result.isEmpty
             } else {
                 hasMore = false
             }
             
         } catch {
-            errorMessage = (error as? APIError)?.message ?? "Failed to load more"
+            presentError(
+                error,
+                fallback: "Failed to load more",
+                retryAction: { [weak self] in
+                    await self?.loadNextPage()
+                }
+            )
         }
         
         isLoadingMore = false
@@ -169,17 +184,25 @@ final class EmployeeListViewModel {
             availableDepartments = filters.departments
             
         } catch {
-            print(" Failed to load filters:", error)
+            presentError(
+                error,
+                fallback: "Failed to load filters",
+                retryAction: { [weak self] in
+                    await self?.loadFilters()
+                }
+            )
         }
     }
     
     func refresh() async {
         Task {
-            do {
-                try await clearDBSyncUseCase.execute()
-            } catch {
-                print("Unable to clear DB")
-            }
+//            if currentQuery == nil {
+                do {
+                    try await clearDBSyncUseCase.execute()
+                } catch {
+                    print("Unable to clear DB")
+                }
+//            }
             
             hasLoaded = false
             await loadInitial()
@@ -227,7 +250,7 @@ final class EmployeeListViewModel {
             }
             
         } catch {
-            errorMessage = (error as? APIError)?.message ?? "Delete failed"
+            presentError(error, fallback: "Delete failed")
         }
     }
     
@@ -242,6 +265,37 @@ final class EmployeeListViewModel {
         await applyQuery(
             manageEmployeeListFiltersUseCase.buildQuery(from: currentFilters)
         )
+    }
+    
+    var canRetryError: Bool {
+        retryAction != nil
+    }
+    
+    func dismissError() {
+        errorMessage = nil
+        retryAction = nil
+    }
+    
+    func retryLastError() {
+        guard let retryAction else {
+            dismissError()
+            return
+        }
+        
+        dismissError()
+        
+        Task {
+            await retryAction()
+        }
+    }
+    
+    private func presentError(
+        _ error: Error,
+        fallback: String,
+        retryAction: (@MainActor () async -> Void)? = nil
+    ) {
+        errorMessage = error.userMessage(fallback: fallback)
+        self.retryAction = retryAction
     }
     
     

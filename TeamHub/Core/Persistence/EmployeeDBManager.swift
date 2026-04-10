@@ -48,6 +48,7 @@ extension EmployeeDBManager {
             updatedAt: employee.updatedAt,
             deletedAt: employee.deletedAt
         )
+//        print("\(employee.name) Date:-----", employee.createdAt!)
         
         context.insert(entity)
         try context.save()
@@ -388,6 +389,20 @@ extension EmployeeDBManager {
             }
         )
         
+        let results = try context.fetch(descriptor)
+        
+        for entity in results {
+            context.delete(entity)
+        }
+        
+        try save()
+        
+        dbOffset = 0
+    }
+    
+    func deleteAll() throws {
+        
+        let descriptor = FetchDescriptor<EmployeeEntity>()
         let results = try context.fetch(descriptor)
         
         for entity in results {

@@ -13,6 +13,7 @@ struct EmployeeFormPhoneSectionView: View {
     let mobileTypes: [MobileType]
     let canAddPhone: Bool
     let isTypeUsed: (MobileType, String) -> Bool
+    let numberError: (String) -> String?
     let onDelete: (String) -> Void
     let onAddPhone: () -> Void
 
@@ -23,6 +24,7 @@ struct EmployeeFormPhoneSectionView: View {
                     mobile: $mobile,
                     mobileTypes: mobileTypes,
                     isTypeUsed: isTypeUsed,
+                    numberError: numberError(mobile.number),
                     onDelete: {
                         onDelete(mobile.id ?? "")
                     }

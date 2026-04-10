@@ -122,6 +122,10 @@ final class SyncManager {
         error: Error
     ) throws {
         
+        DataChangeNotifier.shared.notifySyncError(
+            message: syncErrorMessage(for: entity, error: error)
+        )
+        
         guard let apiError = error as? APIError else {
             return // retry later
         }
@@ -148,6 +152,22 @@ final class SyncManager {
         }
     }
     
+    private func syncErrorMessage(
+        for entity: EmployeeEntity,
+        error: Error
+    ) -> String {
+        let name = entity.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        let prefix: String
+        if name.isEmpty {
+            prefix = "We couldn't sync one of your local changes."
+        } else {
+            prefix = "We couldn't sync local changes for \(name)."
+        }
+        
+        return "\(prefix) \(error.userMessage(fallback: "Please refresh to load the latest server data.")) Refresh to load fresh server data and remove unsynced local changes."
+    }
+    
     func pullSync() async {
         
         guard networkMonitor.isConnected else { return }
@@ -167,10 +187,20 @@ final class SyncManager {
         if response.employees.isEmpty {
             return
         }
-        try dbManager.applyServerChanges(response.employees.map { $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)})
+        
+        let employees = response.employees.map {
+            $0.toEmployeeDetail(dateParser: dateParser, dateParserISO: dateParserISO)
+        }
+        
+        try dbManager.applyServerChanges(employees)
         
         cursorStore.save(response.nextCursor.seq)
 //        try context.save()
+        
+        employees
+            .filter { $0.deletedAt != nil }
+            .forEach { DataChangeNotifier.shared.notifyEmployeeDeleted(id: $0.id) }
+        
         DataChangeNotifier.shared.notify()
         
 //        if response.hasMore {

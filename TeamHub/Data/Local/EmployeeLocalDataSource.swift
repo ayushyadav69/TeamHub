@@ -18,7 +18,7 @@ protocol EmployeeLocalDataSource {
     func update(_ employee: EmployeeDetail, syncStatus: SyncStatus) async throws
     func delete(id: String) async throws
     
-    func fetchDetail(id: String) async throws -> EmployeeDetail
+    func fetchDetail(id: String) async throws -> EmployeeDetail?
     func fetchFilters() async throws -> Filters
     
     func fetchPending(
@@ -32,5 +32,6 @@ protocol EmployeeLocalDataSource {
     
     func exists(id: String) async throws -> Bool
     func deleteAllSynced() async throws
+    func deleteAll() async throws
     func updateImage(id: String, url: String) throws
 }

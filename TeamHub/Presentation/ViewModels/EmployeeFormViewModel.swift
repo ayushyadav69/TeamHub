@@ -45,6 +45,15 @@ final class EmployeeFormViewModel {
     
     var isLoading = false
     var errorMessage: String?
+    var shouldDismiss = false
+    
+    @ObservationIgnored
+    private var retryAction: (@MainActor () async -> Void)?
+    
+    @ObservationIgnored
+    private var initialFormInput: EmployeeFormInput
+    
+    private var deletedEmployeeObserverId: UUID?
     
     // MARK: - Init
     
@@ -61,6 +70,7 @@ final class EmployeeFormViewModel {
         self.fetchFiltersUseCase = fetchFiltersUseCase
 
         let input = prepareEmployeeFormUseCase.makeInput(from: employee)
+        self.initialFormInput = input
 
         selectedImageURL = input.selectedImageURL
         name = input.name
@@ -72,6 +82,25 @@ final class EmployeeFormViewModel {
         isActive = input.isActive
         mobiles = input.mobiles
         joiningDate = input.joiningDate
+        
+        if let employee {
+            deletedEmployeeObserverId = DataChangeNotifier.shared
+                .addDeletedEmployeeObserver { [weak self] deletedEmployeeId in
+                    guard deletedEmployeeId == employee.id else { return }
+                    
+                    Task { @MainActor [weak self] in
+                        self?.shouldDismiss = true
+                    }
+                }
+        }
+    }
+    
+    deinit {
+        MainActor.assumeIsolated {
+            if let deletedEmployeeObserverId {
+                DataChangeNotifier.shared.removeObserver(deletedEmployeeObserverId)
+            }
+        }
     }
     
     var nameError: String? {
@@ -81,9 +110,29 @@ final class EmployeeFormViewModel {
     var emailError: String? {
         prepareEmployeeFormUseCase.emailError(for: email)
     }
+    
+    var cityError: String? {
+        prepareEmployeeFormUseCase.cityError(for: city)
+    }
+    
+    var countryError: String? {
+        prepareEmployeeFormUseCase.countryError(for: country)
+    }
+    
+    var joiningDateError: String? {
+        prepareEmployeeFormUseCase.joiningDateError(for: joiningDate)
+    }
 
     var isFormValid: Bool {
         prepareEmployeeFormUseCase.isFormValid(formInput)
+    }
+    
+    var hasChanges: Bool {
+        selectedImageData != nil || formInput != initialFormInput
+    }
+    
+    var canSave: Bool {
+        isFormValid && !isLoading && (!isEdit || hasChanges)
     }
 
     var canAddPhone: Bool {
@@ -135,8 +184,21 @@ final class EmployeeFormViewModel {
             designation = normalizedFilters.selectedDesignation
             department = normalizedFilters.selectedDepartment
             
+            if isEdit {
+                initialFormInput = makeInitialFormInput(
+                    designation: normalizedFilters.selectedDesignation,
+                    department: normalizedFilters.selectedDepartment
+                )
+            }
+            
         } catch {
-            print("Failed to load filters:", error)
+            presentError(
+                error,
+                fallback: "Failed to load form options",
+                retryAction: { [weak self] in
+                    await self?.loadFilters()
+                }
+            )
         }
     }
     
@@ -148,10 +210,15 @@ final class EmployeeFormViewModel {
         )
     }
     
+    func mobileNumberError(for number: String) -> String? {
+        prepareEmployeeFormUseCase.mobileNumberError(for: number)
+    }
+    
     func submit() async -> Bool {
         
         guard isFormValid else {
-            errorMessage = "Please fill all required fields"
+            errorMessage = "Please fix the highlighted fields"
+            retryAction = nil
             return false
         }
         
@@ -174,8 +241,49 @@ final class EmployeeFormViewModel {
             return true
             
         } catch {
-            errorMessage = (error as? APIError)?.message ?? "Failed to save"
+            presentError(error, fallback: "Failed to save")
             return false
         }
+    }
+    
+    var canRetryError: Bool {
+        retryAction != nil
+    }
+    
+    func dismissError() {
+        errorMessage = nil
+        retryAction = nil
+    }
+    
+    func retryLastError() {
+        guard let retryAction else {
+            dismissError()
+            return
+        }
+        
+        dismissError()
+        
+        Task {
+            await retryAction()
+        }
+    }
+    
+    private func presentError(
+        _ error: Error,
+        fallback: String,
+        retryAction: (@MainActor () async -> Void)? = nil
+    ) {
+        errorMessage = error.userMessage(fallback: fallback)
+        self.retryAction = retryAction
+    }
+    
+    private func makeInitialFormInput(
+        designation: String? = nil,
+        department: String? = nil
+    ) -> EmployeeFormInput {
+        var input = prepareEmployeeFormUseCase.makeInput(from: existingEmployee)
+        input.designation = designation ?? input.designation
+        input.department = department ?? input.department
+        return input
     }
 }
