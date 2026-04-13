@@ -123,10 +123,13 @@ final class EmployeeListViewModel {
         guard !isLoading else { return }
         guard !hasLoaded else { return }
         
-        hasLoaded = true
+        
         
         isLoading = true
-        defer { isLoading = false }
+        defer {
+            isLoading = false
+            hasLoaded = true
+        }
         errorMessage = nil
         
         currentPage = 1
