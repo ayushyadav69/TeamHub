@@ -204,6 +204,7 @@ final class EmployeeListViewModel {
     func loadFilters() async {
         
         do {
+            let _ = try await fetchFiltersUseCase.execute()
             let filters = try await fetchFiltersUseCase.forForm()
             
             availableDesignations = filters.designations

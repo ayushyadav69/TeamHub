@@ -33,7 +33,9 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
         self.repository = repository
         self.syncManager = syncManager
         self.networkMonitor = networkMonitor
+        let existingHandler = networkMonitor.onReconnect
         self.networkMonitor.onReconnect = { [weak self] in
+            existingHandler?()
             self?.onReconnect?()
         }
     }

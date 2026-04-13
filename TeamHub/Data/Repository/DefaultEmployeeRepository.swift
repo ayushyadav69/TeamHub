@@ -45,7 +45,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         
         var pagesFetched = 1
         // QUERY FLOW
-//        print("Api offset = ", page.offset)
+        //        print("Api offset = ", page.offset)
         if let query {
             
             // ONLINE → API ONLY (no caching)
@@ -212,7 +212,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             
             // Insert first, then mark as updated
             try await local.insert(employee, syncStatus: .updated)
-//            try await local.markAsUpdated(id: employee.id)
+            //            try await local.markAsUpdated(id: employee.id)
         }
         DataChangeNotifier.shared.notify()
     }
@@ -227,7 +227,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             
             // Insert minimal entity, then mark deleted
             try await local.insertDeletedPlaceholder(id: id)
-//            try await local.delete(id: id)
+            //            try await local.delete(id: id)
         }
         DataChangeNotifier.shared.notifyEmployeeDeleted(id: id)
         DataChangeNotifier.shared.notify()
@@ -265,6 +265,14 @@ final class DefaultEmployeeRepository: EmployeeRepository {
     }
     
     func fetchFiltersForForm() async throws -> Filters {
+        
+//        if networkMonitor.isConnected {
+//            let response = try await remote.fetchFilters()
+//            
+//            let filters = response.data.toDomain()
+//            filtersCache.save(filters)
+//        }
+        
         if let cache = filtersCache.load() {
             return cache
         }

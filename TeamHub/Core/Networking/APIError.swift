@@ -57,18 +57,18 @@ extension Error {
             return apiError.message
         }
         
-        if let urlError = self as? URLError {
-            switch urlError.code {
-            case .notConnectedToInternet, .networkConnectionLost:
-                return "You're offline. Please check your internet connection and try again."
-            case .timedOut:
-                return "The request timed out. Please try again."
-            case .cannotFindHost, .cannotConnectToHost:
-                return "We couldn't reach the server right now. Please try again."
-            default:
-                break
-            }
-        }
+//        if let urlError = self as? URLError {
+//            switch urlError.code {
+//            case .notConnectedToInternet, .networkConnectionLost:
+//                return "You're offline. Please check your internet connection and try again."
+//            case .timedOut:
+//                return "The request timed out. Please try again."
+//            case .cannotFindHost, .cannotConnectToHost:
+//                return "We couldn't reach the server right now. Please try again."
+//            default:
+//                break
+//            }
+//        }
         
         return fallback
     }
