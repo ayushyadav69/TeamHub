@@ -165,7 +165,11 @@ final class SyncManager {
             prefix = "We couldn't sync local changes for \(name)."
         }
         
-        return "\(prefix) \(error.userMessage(fallback: "Please refresh to load the latest server data.")) Refresh to load fresh server data and remove unsynced local changes."
+        return """
+            \(prefix)
+            \(error.userMessage(fallback: "Please refresh to load the latest server data."))
+            Refresh to load fresh server data and remove unsynced local changes.
+            """
     }
     
     func pullSync() async {

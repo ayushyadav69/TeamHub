@@ -35,14 +35,15 @@ struct EmployeeListView: View {
         Group {
             
             if (viewModel.isLoading || !viewModel.hasLoaded)
-//                && viewModel.employees.isEmpty
+            //                && viewModel.employees.isEmpty
             {
                 
-                VStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
+                List {
+                    ForEach(0..<8, id: \.self) { _ in
+                        EmployeeRowSkeletonView()
+                    }
                 }
+                .listStyle(.plain)
                 
             } else {
                 ZStack {
@@ -111,7 +112,7 @@ struct EmployeeListView: View {
         
         .navigationTitle("Employees")
         .task {
-            viewModel.getEmptyStateMessage()
+//            viewModel.getEmptyStateMessage()
             await viewModel.loadInitial()
             await viewModel.loadFilters()
         }

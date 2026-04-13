@@ -15,13 +15,15 @@ protocol FetchEmployeesUseCase {
     ) async throws -> (_:[Employee],pageFetched: Int)
     func getNetworkStatus() -> String
     func getEmptyStateMessage() -> String
+    var onReconnect: (() -> Void)? { get set }
 }
 
 final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
     
     private let repository: EmployeeRepository
     private let syncManager: SyncManager
-    private let networkMonitor: NetworkMonitor
+    private var networkMonitor: NetworkMonitor
+    var onReconnect: (() -> Void)?
     
     init(
         repository: EmployeeRepository,
@@ -31,6 +33,9 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
         self.repository = repository
         self.syncManager = syncManager
         self.networkMonitor = networkMonitor
+        self.networkMonitor.onReconnect = { [weak self] in
+            self?.onReconnect?()
+        }
     }
     
     func execute(
@@ -67,4 +72,5 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
         You are Offline, May have employees on server.
         """
     }
+    
 }

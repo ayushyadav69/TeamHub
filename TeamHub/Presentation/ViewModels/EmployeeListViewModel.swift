@@ -15,7 +15,7 @@ final class EmployeeListViewModel {
     
     // MARK: - Dependencies
     
-    private let fetchEmployeesUseCase: FetchEmployeesUseCase
+    private var fetchEmployeesUseCase: FetchEmployeesUseCase
     private let manageEmployeeListFiltersUseCase: ManageEmployeeListFiltersUseCase
     private let deleteEmployeeUseCase: DeleteEmployeeUseCase
     private let fetchFiltersUseCase: FetchFiltersUseCase
@@ -84,16 +84,27 @@ final class EmployeeListViewModel {
             }
         }
         Task {
-               while true {
-                   await MainActor.run {
-                       self.networkStatus = self.getNetworkStatus()
-                   }
-                   try? await Task.sleep(nanoseconds: 1_000_000_000) // every 1 sec
-               }
-           }
-//        self.networkStatus = getNetworkStatus()
+            while true {
+                await MainActor.run {
+                    self.networkStatus = self.getNetworkStatus()
+                    self.emptyStateMessage = self.getEmptyStateMessage()
+                }
+                try? await Task.sleep(nanoseconds: 1_000_000_000) // every 1 sec
+            }
+        }
+        
+        self.fetchEmployeesUseCase.onReconnect = { [weak self] in
+                guard let self else { return }
+                
+                Task {
+                    self.hasLoaded = false
+                    await self.loadInitial()
+                }
+            }
+        
+        //        self.networkStatus = getNetworkStatus()
     }
-
+    
     var activeFilterCount: Int {
         manageEmployeeListFiltersUseCase.activeFilterCount(for: currentFilters)
     }
@@ -314,8 +325,8 @@ final class EmployeeListViewModel {
         fetchEmployeesUseCase.getNetworkStatus()
     }
     
-    func getEmptyStateMessage() {
-        emptyStateMessage = fetchEmployeesUseCase.getEmptyStateMessage()
+    func getEmptyStateMessage() -> String {
+        fetchEmployeesUseCase.getEmptyStateMessage()
     }
     
 }

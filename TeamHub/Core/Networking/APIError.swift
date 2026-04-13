@@ -35,7 +35,17 @@ extension APIError {
         case .custom(let message):
             return message
         case .invalidStatusCode(_, let message):
-            return message ?? "Something went wrong"
+            
+//            return message ?? "Something went wrong"
+            guard let message else { return "Something went wrong."}
+            
+            if message.contains("employees_email_key") {
+                return "Error: Email exists"
+            } else if message.contains("unique_home_number") {
+                return "Error: Home phone number should be unique."
+            } else {
+                return message
+            }
         }
     }
 }
