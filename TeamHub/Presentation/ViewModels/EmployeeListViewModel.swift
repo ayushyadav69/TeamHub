@@ -124,11 +124,11 @@ final class EmployeeListViewModel {
         guard !hasLoaded else { return }
         
         
-        
+        hasLoaded = true
         isLoading = true
+        print("LOADING.....")
         defer {
             isLoading = false
-            hasLoaded = true
         }
         errorMessage = nil
         
@@ -237,12 +237,17 @@ final class EmployeeListViewModel {
     
     func applyQuery(_ query: SearchFilterQuery?) async {
         
+//        if currentQuery == query && hasLoaded {
+//            return
+//        }
+        
         currentQuery = query
         hasLoaded = false
         await loadInitial()
     }
 
     func setSearchText(_ value: String) {
+        guard searchText != value else { return }
         searchText = value
 
         searchTask?.cancel()
@@ -288,6 +293,13 @@ final class EmployeeListViewModel {
     }
 
     private func applyCurrentFilters() async {
+        await applyQuery(
+            manageEmployeeListFiltersUseCase.buildQuery(from: currentFilters)
+        )
+    }
+    func applyCurrentFiltersImmediate() async {
+        searchTask?.cancel() //  cancel debounce
+        
         await applyQuery(
             manageEmployeeListFiltersUseCase.buildQuery(from: currentFilters)
         )

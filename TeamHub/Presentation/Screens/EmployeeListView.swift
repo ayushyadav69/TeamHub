@@ -13,6 +13,8 @@ struct EmployeeListView: View {
     let onNavigate: (Route) -> Void
     
     @State private var showFilterSheet = false
+    @FocusState private var isSearchFocused: Bool
+    @State private var searchUIId = UUID()
     
     init(
         container: AppContainer,
@@ -106,6 +108,17 @@ struct EmployeeListView: View {
                         set: { viewModel.setSearchText($0) }
                     )
                 )
+                .focused($isSearchFocused)
+                .id(searchUIId)
+                .onSubmit(of: .search) {
+                    isSearchFocused = false
+//                    dismissSearch()
+                    Task {
+                        await viewModel.applyCurrentFiltersImmediate()
+                        searchUIId = UUID()
+                    }
+                    
+                }
             }
             
         }

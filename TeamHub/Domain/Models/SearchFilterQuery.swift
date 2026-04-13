@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SearchFilterQuery {
+struct SearchFilterQuery: Equatable {
     
     let searchText: String?
     let designations: [String]
