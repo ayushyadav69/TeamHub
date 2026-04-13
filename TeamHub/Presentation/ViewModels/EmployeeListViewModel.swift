@@ -44,6 +44,8 @@ final class EmployeeListViewModel {
     private let pageSize = 20
     private var hasMore = true
     private(set) var hasLoaded = false
+    var networkStatus: String = "Online"
+    var emptyStateMessage: String = "No Employees"
     
     // MARK: - Query
     
@@ -70,6 +72,7 @@ final class EmployeeListViewModel {
         self.fetchFiltersUseCase = fetchFiltersUseCase
         self.clearDBSyncUseCase = clearDBSyncUseCase
         
+        
         observerId = DataChangeNotifier.shared.addObserver { [weak self] in
             
             self?.reloadTask?.cancel()
@@ -80,6 +83,15 @@ final class EmployeeListViewModel {
                 await self?.loadInitial()
             }
         }
+        Task {
+               while true {
+                   await MainActor.run {
+                       self.networkStatus = self.getNetworkStatus()
+                   }
+                   try? await Task.sleep(nanoseconds: 1_000_000_000) // every 1 sec
+               }
+           }
+//        self.networkStatus = getNetworkStatus()
     }
 
     var activeFilterCount: Int {
@@ -178,7 +190,7 @@ final class EmployeeListViewModel {
     func loadFilters() async {
         
         do {
-            let filters = try await fetchFiltersUseCase.execute()
+            let filters = try await fetchFiltersUseCase.forForm()
             
             availableDesignations = filters.designations
             availableDepartments = filters.departments
@@ -298,5 +310,12 @@ final class EmployeeListViewModel {
         self.retryAction = retryAction
     }
     
+    func getNetworkStatus() -> String{
+        fetchEmployeesUseCase.getNetworkStatus()
+    }
+    
+    func getEmptyStateMessage() {
+        emptyStateMessage = fetchEmployeesUseCase.getEmptyStateMessage()
+    }
     
 }

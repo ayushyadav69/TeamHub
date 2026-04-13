@@ -96,7 +96,7 @@ struct EmployeeListView: View {
                             }
                         }
                     } else {
-                        Text("No employees")
+                        EmptyStateView(message: viewModel.emptyStateMessage)
                     }
                 }
                 .searchable(
@@ -111,6 +111,7 @@ struct EmployeeListView: View {
         
         .navigationTitle("Employees")
         .task {
+            viewModel.getEmptyStateMessage()
             await viewModel.loadInitial()
             await viewModel.loadFilters()
         }
@@ -129,34 +130,44 @@ struct EmployeeListView: View {
         }
         
         .toolbar {
-            Button {
-                onNavigate(.add)
-            } label: {
-                Image(systemName: "plus")
-            }
             
-            Button {
-                showFilterSheet = true
-            } label: {
-                
-                ZStack(alignment: .topTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    onNavigate(.add)
+                } label: {
+                    Image(systemName: "plus")
+                }
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    showFilterSheet = true
+                } label: {
                     
-                    Image(
-                        systemName: viewModel.activeFilterCount > 0
-                        ? "line.3.horizontal.decrease.circle.fill"
-                        : "line.3.horizontal.decrease.circle"
-                    )
-                    
-                    if viewModel.activeFilterCount > 0 {
-                        Text("\(viewModel.activeFilterCount)")
-                            .font(.caption2)
-                            .padding(4)
-                            .background(Color.red)
-                            .foregroundColor(.white)
-                            .clipShape(Circle())
-                            .offset(x: 8, y: -8)
+                    ZStack(alignment: .topTrailing) {
+                        
+                        Image(
+                            systemName: viewModel.activeFilterCount > 0
+                            ? "line.3.horizontal.decrease.circle.fill"
+                            : "line.3.horizontal.decrease.circle"
+                        )
+                        
+                        if viewModel.activeFilterCount > 0 {
+                            Text("\(viewModel.activeFilterCount)")
+                                .font(.caption2)
+                                .padding(4)
+                                .background(Color.red)
+                                .foregroundColor(.white)
+                                .clipShape(Circle())
+                                .offset(x: 8, y: -8)
+                        }
                     }
                 }
+            }
+            
+            ToolbarItem(placement: .topBarLeading) {
+                NetworkStatusView(text: viewModel.networkStatus)
+//                    .padding()
+//                    .frame(width: .infinity)
             }
         }
         .sheet(isPresented: $showFilterSheet) {

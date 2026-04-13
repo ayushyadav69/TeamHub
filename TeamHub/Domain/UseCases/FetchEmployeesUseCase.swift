@@ -13,6 +13,8 @@ protocol FetchEmployeesUseCase {
         query: SearchFilterQuery?,
         page: EmployeePage
     ) async throws -> (_:[Employee],pageFetched: Int)
+    func getNetworkStatus() -> String
+    func getEmptyStateMessage() -> String
 }
 
 final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
@@ -47,5 +49,22 @@ final class DefaultFetchEmployeesUseCase: FetchEmployeesUseCase {
             query: query,
             page: page
         )
+    }
+    
+    func getNetworkStatus() -> String {
+        if networkMonitor.isConnected {
+            return "Online"
+        }
+        return "Offline"
+    }
+    
+    func getEmptyStateMessage() -> String {
+        if networkMonitor.isConnected {
+            return "No Employees"
+        }
+        return """
+        No Employees 
+        You are Offline, May have employees on server.
+        """
     }
 }
