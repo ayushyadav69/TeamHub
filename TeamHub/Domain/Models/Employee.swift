@@ -16,4 +16,5 @@ struct Employee: Identifiable {
     let isActive: Bool
     let imageURL: String?
     var imageLocalPath: String?
+    let syncStatus: String?
 }

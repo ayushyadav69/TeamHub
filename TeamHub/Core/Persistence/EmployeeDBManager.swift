@@ -124,7 +124,7 @@ extension EmployeeDBManager {
         
 //        print("DB offset = ", dbOffset)
         
-        let status = SyncStatus.synced.rawValue
+        let status = SyncStatus.created.rawValue
         
         let search = query?.searchText?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -137,7 +137,7 @@ extension EmployeeDBManager {
             
             entity.deletedAt == nil
             &&
-            entity.syncStatus == status
+            entity.syncStatus != status
             
             &&
             (search == nil || entity.name.localizedStandardContains(search!))
@@ -258,7 +258,7 @@ extension EmployeeDBManager {
         query: SearchFilterQuery?
     ) throws -> [EmployeeEntity] {
         
-        let status = SyncStatus.synced.rawValue
+        let status = SyncStatus.created.rawValue
         
         let search = query?.searchText?
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -270,7 +270,7 @@ extension EmployeeDBManager {
         let predicate = #Predicate<EmployeeEntity> { entity in
             
             // ONLY pending
-            entity.syncStatus != status
+            entity.syncStatus == status
             &&
             entity.deletedAt == nil
             

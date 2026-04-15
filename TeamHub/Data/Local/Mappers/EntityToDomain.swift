@@ -17,7 +17,8 @@ extension EmployeeEntity {
             department: department,
             isActive: isActive,
             imageURL: imageURL,
-            imageLocalPath: imageLocalPath
+            imageLocalPath: imageLocalPath,
+            syncStatus: syncStatus
         )
     }
 }
@@ -47,7 +48,8 @@ extension EmployeeEntity {
                     type: MobileType(rawValue: $0.type) ?? .other,
                     number: $0.number
                 )
-            }
+            },
+            syncStatus: syncStatus
         )
     }
 }

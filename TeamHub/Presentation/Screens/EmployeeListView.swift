@@ -16,6 +16,9 @@ struct EmployeeListView: View {
     @FocusState private var isSearchFocused: Bool
     @State private var searchUIId = UUID()
     
+    @State private var deleteCandidate: Employee?
+    @State private var showDeleteDialog = false
+    
     init(
         container: AppContainer,
         onNavigate: @escaping (Route) -> Void
@@ -67,6 +70,9 @@ struct EmployeeListView: View {
                                                 }
                                             }
                                         }
+                                }
+                                .onDelete { indexSet in
+                                    handleDelete(indexSet)
                                 }
                                 
                                 if viewModel.isLoadingMore {
@@ -121,6 +127,20 @@ struct EmployeeListView: View {
                 }
             }
             
+        }
+        .confirmationDialog("Delete Employee?", isPresented: $showDeleteDialog) {
+            
+            Button("Delete", role: .destructive) {
+                if let employee = deleteCandidate {
+                    Task {
+                        await viewModel.deleteEmployee(id: employee.id)
+                    }
+                }
+            }
+            
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("This action cannot be undone.")
         }
         
         .navigationTitle("Employees")
@@ -213,5 +233,12 @@ struct EmployeeListView: View {
                 }
             }
         )
+    }
+    
+    private func handleDelete(_ indexSet: IndexSet) {
+        if let index = indexSet.first {
+            deleteCandidate = viewModel.employees[index]
+            showDeleteDialog = true
+        }
     }
 }

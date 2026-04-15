@@ -201,9 +201,14 @@ final class SyncManager {
         cursorStore.save(response.nextCursor.seq)
 //        try context.save()
         
-        employees
-            .filter { $0.deletedAt != nil }
-            .forEach { DataChangeNotifier.shared.notifyEmployeeDeleted(id: $0.id) }
+        for employee in response.employees {
+            
+            if employee.deletedAt != "" {
+                DataChangeNotifier.shared.notifyEmployeeDeleted(id: employee.id)
+            } else {
+                DataChangeNotifier.shared.notifyEmployeeUpsert(employee.toEmployee())
+            }
+        }
         
         DataChangeNotifier.shared.notify()
         

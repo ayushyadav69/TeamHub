@@ -193,7 +193,8 @@ final class DefaultPrepareEmployeeFormUseCase: PrepareEmployeeFormUseCase {
             createdAt: existingEmployee?.createdAt,
             updatedAt: Date.now,
             deletedAt: existingEmployee?.deletedAt,
-            mobiles: input.mobiles
+            mobiles: input.mobiles,
+            syncStatus: SyncStatus.created.rawValue
         )
 
         return EmployeeFormData(

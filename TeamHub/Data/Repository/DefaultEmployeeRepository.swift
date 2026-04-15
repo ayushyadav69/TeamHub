@@ -177,7 +177,8 @@ final class DefaultEmployeeRepository: EmployeeRepository {
         
         // STEP 2: Save to DB FIRST (offline-first)
         try await local.insert(employee, syncStatus: .created)
-        DataChangeNotifier.shared.notify()
+//        DataChangeNotifier.shared.notify()
+        DataChangeNotifier.shared.notifyEmployeeUpsert(form.employee.toEmployee())
         // STEP 3: Mark for sync (SyncManager handles API)
     }
     
@@ -215,6 +216,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             //            try await local.markAsUpdated(id: employee.id)
         }
         DataChangeNotifier.shared.notify()
+        DataChangeNotifier.shared.notifyEmployeeUpsert(form.employee.toEmployee())
     }
     
     func deleteEmployee(id: String) async throws {
@@ -230,7 +232,7 @@ final class DefaultEmployeeRepository: EmployeeRepository {
             //            try await local.delete(id: id)
         }
         DataChangeNotifier.shared.notifyEmployeeDeleted(id: id)
-        DataChangeNotifier.shared.notify()
+//        DataChangeNotifier.shared.notify()
     }
     
     func fetchDetail(id: String) async throws -> EmployeeDetail {

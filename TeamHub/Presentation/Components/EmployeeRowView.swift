@@ -49,13 +49,22 @@ private extension EmployeeRowView {
 private extension EmployeeRowView {
     
     var statusView: some View {
-        
-        Text(employee.isActive ? "Active" : "Inactive")
-            .font(.caption)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .background(statusBackground)
-            .clipShape(Capsule())
+        HStack(spacing: 12) {
+            if let syncStatus = employee.syncStatus {
+                if syncStatus != SyncStatus.synced.rawValue {
+                    Circle()
+                        .fill(.yellow)
+                        .frame(width: 8, height: 8)
+                }
+            }
+            
+            Text(employee.isActive ? "Active" : "Inactive")
+                .font(.caption)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(statusBackground)
+                .clipShape(Capsule())
+        }
     }
     
     var statusBackground: some ShapeStyle {

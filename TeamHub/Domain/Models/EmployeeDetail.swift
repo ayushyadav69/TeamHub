@@ -24,6 +24,7 @@ struct EmployeeDetail: Hashable {
     let updatedAt: Date?
     let deletedAt: Date?
     let mobiles: [Mobile]
+    let syncStatus: String?
 }
 
 struct Mobile: Hashable, Identifiable {
@@ -36,4 +37,19 @@ enum MobileType: String, Codable {
     case home
     case office
     case other
+}
+
+extension EmployeeDetail {
+    
+    func toEmployee() -> Employee {
+        Employee(
+            id: id,
+            name: name,
+            designation: designation,
+            department: department,
+            isActive: isActive,
+            imageURL: imageURL,
+            syncStatus: syncStatus
+        )
+    }
 }

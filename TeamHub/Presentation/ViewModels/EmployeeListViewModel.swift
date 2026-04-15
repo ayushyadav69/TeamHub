@@ -37,6 +37,8 @@ final class EmployeeListViewModel {
     
     private var observerId: UUID?
     private var reloadTask: Task<Void, Never>?
+    private var deletedEmployeeObserverId: UUID?
+    private var upsertObserverId: UUID?
     
     // MARK: - Pagination
     
@@ -73,16 +75,36 @@ final class EmployeeListViewModel {
         self.clearDBSyncUseCase = clearDBSyncUseCase
         
         
-        observerId = DataChangeNotifier.shared.addObserver { [weak self] in
-            
-            self?.reloadTask?.cancel()
-            
-            self?.reloadTask = Task {
-                try? await Task.sleep(nanoseconds: 300_000_000)
-                self?.hasLoaded = false
-                await self?.loadInitial()
+        upsertObserverId = DataChangeNotifier.shared
+            .addEmployeeUpsertObserver { [weak self] employee in
+                
+                Task { @MainActor in
+                    guard let self else { return }
+                    
+                    if let index = self.employees.firstIndex(where: { $0.id.lowercased() == employee.id.lowercased() }) {
+                        // UPDATE
+                        self.employees[index] = employee
+                    } else {
+                        // INSERT (top or based on sort)
+                        withAnimation(.easeInOut) {
+                            self.employees.insert(employee, at: 0)
+                        }
+                    }
+                }
             }
-        }
+        deletedEmployeeObserverId = DataChangeNotifier.shared
+            .addDeletedEmployeeObserver { [weak self] deletedId in
+                
+                Task { @MainActor in
+                    guard let self else { return }
+                    
+                    if let index = self.employees.firstIndex(where: { $0.id == deletedId }) {
+                        withAnimation(.easeInOut) {
+                            self.employees.remove(at: index)
+                        }
+                    }
+                }
+            }
         Task {
             while true {
                 await MainActor.run {
@@ -95,8 +117,9 @@ final class EmployeeListViewModel {
         
         self.fetchEmployeesUseCase.onReconnect = { [weak self] in
                 guard let self else { return }
+            self.reloadTask?.cancel()
                 
-                Task {
+            self.reloadTask = Task {
                     self.hasLoaded = false
                     await self.loadInitial()
                 }

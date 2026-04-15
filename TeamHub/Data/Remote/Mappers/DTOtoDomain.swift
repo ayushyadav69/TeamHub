@@ -27,7 +27,8 @@ extension EmployeeDTO {
             designation: designation,
             department: department,
             isActive: isActive,
-            imageURL: imgURL
+            imageURL: imgURL,
+            syncStatus: nil
         )
     }
 }
@@ -50,7 +51,8 @@ extension EmployeeDTO {
             createdAt: dateParserISO.parse(createdAt ?? ""),
             updatedAt: dateParserISO.parse(updatedAt ?? ""),
             deletedAt: dateParserISO.parse(deletedAt ?? ""),
-            mobiles: mobiles?.map { $0.toDomain() } ?? []
+            mobiles: mobiles?.map { $0.toDomain() } ?? [],
+            syncStatus: nil
         )
     }
 }
