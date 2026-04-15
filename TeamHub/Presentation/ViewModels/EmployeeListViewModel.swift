@@ -124,12 +124,13 @@ final class EmployeeListViewModel {
         guard !hasLoaded else { return }
         
         
-        hasLoaded = true
+        
         isLoading = true
         print("LOADING.....")
-        defer {
-            isLoading = false
-        }
+       
+           
+            
+        
         errorMessage = nil
         
         currentPage = 1
@@ -144,6 +145,8 @@ final class EmployeeListViewModel {
             employees = result
             hasMore = !result.isEmpty
             currentPage += pageFetched
+            hasLoaded = true
+            isLoading = false
         } catch {
             
             if (error as? URLError)?.code == .cancelled {
